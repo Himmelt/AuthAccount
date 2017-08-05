@@ -1,9 +1,0 @@
-# Use https://travis-ci.org/ for automatic testing
-
-# This is a java project
-language: java
-
-script: mvn compile test
-
-# Sponge runs only on Java 8
-jdk: [oraclejdk8]
