@@ -47,9 +47,9 @@ public class LoginTask implements Runnable {
 
             if (account.checkPassword(plugin, userInput)) {
                 plugin.getAttempts().remove(player.getName());
-                account.setLoggedIn(true);
+                account.setOnline(true);
                 //update the ip
-                account.setIp(IPUtil.byte2ipv4(player.getConnection().getAddress().getAddress().getAddress()));
+                account.setIp(IPUtil.getPlayerIP(player));
 
                 player.sendMessage(plugin.getCfgLoader().getTextConfig().getLoggedIn());
                 Sponge.getScheduler().createTaskBuilder()

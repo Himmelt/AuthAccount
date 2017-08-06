@@ -30,22 +30,22 @@ public class DatabaseMigration {
 
                 tableExists = true;
             } catch (SQLException sqlEx) {
-                plugin.getLogger().debug("Table doesn't exist", sqlEx);
+                plugin.getLogger().info("Table " + Database.USERS_TABLE + " doesn't exist,will create it!");
             }
 
             if (!tableExists) {
                 if (plugin.getCfgLoader().getConfig().getSqlConfiguration().getType() == SQLType.SQLITE) {
                     Statement statement = conn.createStatement();
                     statement.execute("CREATE TABLE " + Database.USERS_TABLE + " ( "
-                            + "`UserID` INTEGER PRIMARY KEY AUTOINCREMENT, "
-                            + "`UUID` BINARY(16) NOT NULL , "
-                            + "`Username` VARCHAR , "
-                            + "`Password` VARCHAR(64) NOT NULL , "
-                            + "`IP` BINARY(32) NOT NULL , "
-                            + "`LastLogin` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP , "
-                            + "`Email` VARCHAR(64) DEFAULT NULL , "
-                            + "`LoggedIn` BOOLEAN DEFAULT 0, "
-                            + "UNIQUE (`UUID`) "
+                            + "`userid` INTEGER PRIMARY KEY AUTOINCREMENT, "
+                            + "`uuid` char(36) NOT NULL DEFAULT '' , "
+                            + "`username` char(16) NOT NULL DEFAULT '' , "
+                            + "`password` varchar(64) NOT NULL DEFAULT '' , "
+                            + "`ip` varchar(32) NOT NULL DEFAULT '' , "
+                            + "`lastlogin` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP  , "
+                            + "`email` VARCHAR(64) DEFAULT NULL , "
+                            + "`online` BOOLEAN DEFAULT 0, "
+                            + "UNIQUE (`uuid`) "
                             + ')');
                     statement.close();
                 } else {

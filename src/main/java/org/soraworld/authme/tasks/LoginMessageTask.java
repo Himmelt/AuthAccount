@@ -19,7 +19,7 @@ public class LoginMessageTask implements Consumer<Task> {
     @Override
     public void accept(Task task) {
         Account account = plugin.getDatabase().getAccountIfPresent(player);
-        if (account != null && account.isLoggedIn()) {
+        if (account != null && account.isOnline()) {
             task.cancel();
             return;
         }

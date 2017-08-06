@@ -1,7 +1,6 @@
 package org.soraworld.authme;
 
-import com.google.common.primitives.Longs;
-import org.apache.commons.lang3.ArrayUtils;
+import org.soraworld.authme.util.IPUtil;
 import org.spongepowered.api.entity.living.player.Player;
 
 import java.sql.ResultSet;
@@ -11,7 +10,7 @@ import java.util.UUID;
 
 public class Account {
 
-    private final UUID uuid;
+    private final String uuid;
 
     private String username;
     private String passwordHash;
@@ -21,21 +20,16 @@ public class Account {
 
     private String email;
 
-    private boolean loggedIn;
+    private boolean online;
 
     public Account(Player player, String password) {
-        this(player.getUniqueId(), player.getName(), password, "invalid");
-        byte[] ips = player.getConnection().getAddress().getAddress().getAddress();
-        if (ips != null && ips.length == 4) {
-            this.ip = ips[0] + "." + ips[1] + "." + ips[2] + "." + ips[3];
-        } else {
-            this.ip = "invalid";
-        }
+        this(player.getUniqueId(), player.getName(), password, "invalid-ip");
+        this.ip = IPUtil.getPlayerIP(player);
     }
 
     //new account
     public Account(UUID uuid, String username, String password, String ip) {
-        this.uuid = uuid;
+        this.uuid = uuid.toString();
         this.username = username;
         this.passwordHash = password;
 
@@ -45,22 +39,12 @@ public class Account {
 
     //existing account
     public Account(ResultSet resultSet) throws SQLException {
-        //uuid in binary format
-        byte[] uuidBytes = resultSet.getBytes(2);
-
-        byte[] mostBits = ArrayUtils.subarray(uuidBytes, 0, 8);
-        byte[] leastBits = ArrayUtils.subarray(uuidBytes, 8, 16);
-
-        long mostByte = Longs.fromByteArray(mostBits);
-        long leastByte = Longs.fromByteArray(leastBits);
-
-        this.uuid = new UUID(mostByte, leastByte);
+        //uuid in string format
+        this.uuid = resultSet.getString(2);
         this.username = resultSet.getString(3);
         this.passwordHash = resultSet.getString(4);
-
         this.ip = resultSet.getString(5);
         this.timestamp = resultSet.getTimestamp(6);
-
         this.email = resultSet.getString(7);
     }
 
@@ -68,7 +52,7 @@ public class Account {
         return plugin.getHasher().checkPassword(passwordHash, userInput);
     }
 
-    public UUID uuid() {
+    public String uuid() {
         return uuid;
     }
 
@@ -115,11 +99,11 @@ public class Account {
 
     //these methods have to thread-safe as they will be accessed
     //through Async (PlayerChatEvent/LoginTask) and sync methods
-    public synchronized boolean isLoggedIn() {
-        return loggedIn;
+    public synchronized boolean isOnline() {
+        return online;
     }
 
-    public synchronized void setLoggedIn(boolean loggedIn) {
-        this.loggedIn = loggedIn;
+    public synchronized void setOnline(boolean online) {
+        this.online = online;
     }
 }

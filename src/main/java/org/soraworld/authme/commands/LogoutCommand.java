@@ -51,11 +51,11 @@ public class LogoutCommand implements CommandExecutor {
         }
 
         Account account = plugin.getDatabase().getAccountIfPresent((Player) source);
-        if (account == null || !account.isLoggedIn()) {
+        if (account == null || !account.isOnline()) {
             source.sendMessage(plugin.getCfgLoader().getTextConfig().getNotLoggedInMessage());
         } else {
             source.sendMessage(plugin.getCfgLoader().getTextConfig().getSuccessfullyLoggedOutMessage());
-            account.setLoggedIn(false);
+            account.setOnline(false);
             account.setIp("empty");
 
             Sponge.getScheduler().createTaskBuilder()

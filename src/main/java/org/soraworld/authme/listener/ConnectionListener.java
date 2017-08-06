@@ -1,26 +1,3 @@
-/*
- * The MIT License (MIT)
- *
- * Copyright (c) 2015 games647 and contributors
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in all
- * copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- * SOFTWARE.
- */
 package org.soraworld.authme.listener;
 
 import org.soraworld.authme.Account;
@@ -52,7 +29,7 @@ public class ConnectionListener {
         if (account != null) {
             plugin.getAttempts().remove(player.getName());
             //account is loaded -> mark the player as logout as it could remain in the cache
-            account.setLoggedIn(false);
+            account.setOnline(false);
 
             if (plugin.getCfgLoader().getConfig().isUpdateLoginStatus()) {
                 Sponge.getScheduler().createTaskBuilder()
@@ -110,7 +87,7 @@ public class ConnectionListener {
                     && !player.hasPermission(plugin.getContainer().getId() + ".no_auto_login")) {
                 //user will be auto logged in
                 player.sendMessage(plugin.getCfgLoader().getTextConfig().getIpAutoLogin());
-                account.setLoggedIn(true);
+                account.setOnline(true);
             } else {
                 //user has an account but isn't logged in
                 sendNotLoggedInMessage(player);
@@ -142,7 +119,7 @@ public class ConnectionListener {
             Sponge.getScheduler().createTaskBuilder()
                     .execute(() -> {
                         Account account = plugin.getDatabase().getAccountIfPresent(player);
-                        if (account == null || !account.isLoggedIn()) {
+                        if (account == null || !account.isOnline()) {
                             player.kick(plugin.getCfgLoader().getTextConfig().getTimeoutReason());
                         }
                     })

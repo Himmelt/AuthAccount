@@ -117,7 +117,7 @@ public class Authme {
                 .build(), "setemail", "email");
 
         commandDispatcher.register(this, CommandSpec.builder()
-                .executor(new UnregisterCommand())
+                .executor(new ForgotPasswordCommand())
                 .build(), "forgotpassword", "forgot");
 
         commandDispatcher.register(this, CommandSpec.builder()

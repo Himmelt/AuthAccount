@@ -16,7 +16,7 @@ public class SQLConfiguration {
     private int port = 3306;
 
     @Setting(comment = "Database name")
-    private String database = "flexiblelogin";
+    private String database = "sponge";
 
     @Setting(comment = "Username to login the database system")
     private String username = "";

@@ -1,34 +1,11 @@
-/*
- * The MIT License (MIT)
- *
- * Copyright (c) 2015 games647 and contributors
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in all
- * copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- * SOFTWARE.
- */
 package org.soraworld.authme.commands;
 
-import org.apache.commons.lang3.RandomStringUtils;
 import org.soraworld.authme.Account;
 import org.soraworld.authme.Authme;
 import org.soraworld.authme.config.EmailConfiguration;
 import org.soraworld.authme.tasks.SaveTask;
 import org.soraworld.authme.tasks.SendEmailTask;
+import org.soraworld.authme.util.Rand;
 import org.spongepowered.api.Sponge;
 import org.spongepowered.api.command.CommandException;
 import org.spongepowered.api.command.CommandPermissionException;
@@ -37,6 +14,7 @@ import org.spongepowered.api.command.CommandSource;
 import org.spongepowered.api.command.args.CommandContext;
 import org.spongepowered.api.command.spec.CommandExecutor;
 import org.spongepowered.api.entity.living.player.Player;
+import org.spongepowered.api.text.LiteralText;
 import org.spongepowered.api.text.Text;
 import org.spongepowered.api.text.format.TextColors;
 
@@ -70,7 +48,7 @@ public class ForgotPasswordCommand implements CommandExecutor {
         if (account == null) {
             src.sendMessage(plugin.getCfgLoader().getTextConfig().getAccountNotLoadedMessage());
             return CommandResult.success();
-        } else if (account.isLoggedIn()) {
+        } else if (account.isOnline()) {
             src.sendMessage(plugin.getCfgLoader().getTextConfig().getAlreadyLoggedInMessage());
             return CommandResult.success();
         }
@@ -81,7 +59,7 @@ public class ForgotPasswordCommand implements CommandExecutor {
             return CommandResult.success();
         }
 
-        String newPassword = generatePassword();
+        String password = Rand.randString(8);
 
         EmailConfiguration emailConfig = plugin.getCfgLoader().getConfig().getEmailConfiguration();
 
@@ -100,15 +78,14 @@ public class ForgotPasswordCommand implements CommandExecutor {
             //sender email with an alias
             message.setFrom(new InternetAddress(senderEmail, emailConfig.getSenderName()));
             message.setRecipient(RecipientType.TO, new InternetAddress(email, src.getName()));
-            message.setSubject(replaceVariables(emailConfig.getSubject(), player, newPassword));
+            message.setSubject(replace(emailConfig.getSubject(), player, password));
 
             //current time
             message.setSentDate(Calendar.getInstance().getTime());
 
-            String textContent = replaceVariables(emailConfig.getText(), player, newPassword);
+            String textContent = replace(emailConfig.getText(), player, password);
             //allow html
-            message.setContent(textContent, "text/html");
-
+            message.setContent(textContent, "text/html;charset=utf-8");
             //we only need to send the message so we use smtp
             Transport transport = session.getTransport("smtp");
             //send email
@@ -116,9 +93,9 @@ public class ForgotPasswordCommand implements CommandExecutor {
                     .async()
                     .execute(new SendEmailTask(player, transport, message))
                     .submit(plugin);
-
+            src.sendMessage(LiteralText.of("will send an email to your email address"));
             //set new password here if the email sending fails fails we have still the old password
-            account.setPasswordHash(plugin.getHasher().hash(newPassword));
+            account.setPasswordHash(plugin.getHasher().hash(password));
             Sponge.getScheduler().createTaskBuilder()
                     .async()
                     .execute(new SaveTask(account))
@@ -134,13 +111,7 @@ public class ForgotPasswordCommand implements CommandExecutor {
         return CommandResult.success();
     }
 
-    private String replaceVariables(String text, Player player, String newPassword) {
-        String serverName = Sponge.getServer().getBoundAddress().get().getAddress().getHostAddress();
-        return text.replace("%player%", player.getName())
-                .replace("%server%", serverName).replace("%password%", newPassword);
-    }
-
-    private String generatePassword() {
-        return RandomStringUtils.random(8);
+    private String replace(String text, Player player, String password) {
+        return text.replace("%player%", player.getName()).replace("%password%", password);
     }
 }

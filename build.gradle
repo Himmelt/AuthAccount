@@ -46,12 +46,12 @@ tasks.withType(JavaCompile) {
 shadowJar {
     dependencies {
         include(dependency('org.mindrot:jbcrypt:0.4'))
-        include(dependency('javax.mail:javax.mail-api:1.6.0'))
+        include(dependency('com.sun.mail:javax.mail:1.6.0'))
     }
 }
 
 dependencies {
     compile 'org.spongepowered:spongeapi:6.1.0-SNAPSHOT'
     compile 'org.mindrot:jbcrypt:0.4'
-    compile 'javax.mail:javax.mail-api:1.6.0'
+    compile 'com.sun.mail:javax.mail:1.6.0'
 }

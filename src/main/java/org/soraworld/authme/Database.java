@@ -1,6 +1,5 @@
 package org.soraworld.authme;
 
-import com.google.common.collect.Maps;
 import com.google.common.primitives.Bytes;
 import com.google.common.primitives.Longs;
 import org.soraworld.authme.config.SQLConfiguration;
@@ -14,8 +13,8 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class Database {
 
@@ -23,7 +22,7 @@ public class Database {
 
     private final Authme plugin = Authme.getInstance();
     //this cache is thread-safe
-    private final Map<UUID, Account> cache = Maps.newConcurrentMap();
+    private final ConcurrentHashMap<String, Account> cache = new ConcurrentHashMap<>();
 
     private final String jdbcUrl;
     private final String username;
@@ -50,7 +49,7 @@ public class Database {
                 .append(sqlConfig.getType().name().toLowerCase()).append("://");
         switch (sqlConfig.getType()) {
             case SQLITE:
-                urlBuilder.append(storagePath).append(File.separatorChar).append("database.db");
+                urlBuilder.append(storagePath).append(File.separatorChar).append(Constant.MODID + ".db");
                 break;
             case MYSQL:
                 //jdbc:<engine>://[<username>[:<password>]@]<host>/<database> - copied from sponge doc
@@ -64,7 +63,7 @@ public class Database {
                 break;
             case H2:
             default:
-                urlBuilder.append(storagePath).append(File.separatorChar).append("database");
+                urlBuilder.append(storagePath).append(File.separatorChar).append(Constant.MODID);
                 break;
         }
 
@@ -81,12 +80,12 @@ public class Database {
     }
 
     public Account getAccountIfPresent(Player player) {
-        return cache.get(player.getUniqueId());
+        return cache.get(player.getUniqueId().toString());
     }
 
-    public boolean isLoggedin(Player player) {
+    public boolean isOnline(Player player) {
         Account account = getAccountIfPresent(player);
-        return account != null && account.isLoggedIn();
+        return account != null && account.isOnline();
     }
 
     public void createTable() {
@@ -99,18 +98,18 @@ public class Database {
         }
     }
 
-    public boolean deleteAccount(String username) {
+    public boolean deleteAccount(String identity) {
         Connection conn = null;
         try {
             conn = getConnection();
 
-            PreparedStatement statement = conn.prepareStatement("DELETE FROM " + USERS_TABLE + " WHERE Username=?");
-            statement.setString(1, username);
-
+            PreparedStatement statement = conn.prepareStatement("DELETE FROM " + USERS_TABLE + " WHERE `uuid`=? OR `username`=?");
+            statement.setString(1, identity);
+            statement.setString(2, identity);
             int affectedRows = statement.executeUpdate();
             //remove cache entry
             cache.values().stream()
-                    .filter(account -> account.username().equals(username))
+                    .filter(account -> account.username().equals(identity) || account.uuid().equals(identity))
                     .map(Account::uuid)
                     .forEach(cache::remove);
 
@@ -157,7 +156,7 @@ public class Database {
     }
 
     public Account remove(Player player) {
-        return cache.remove(player.getUniqueId());
+        return cache.remove(player.getUniqueId().toString());
     }
 
     public Account loadAccount(UUID uuid) {
@@ -165,17 +164,14 @@ public class Database {
         Connection conn = null;
         try {
             conn = getConnection();
-            PreparedStatement prepareStatement = conn.prepareStatement("SELECT * FROM " + USERS_TABLE
-                    + " WHERE UUID=?");
-            byte[] mostBytes = Longs.toByteArray(uuid.getMostSignificantBits());
-            byte[] leastBytes = Longs.toByteArray(uuid.getLeastSignificantBits());
+            PreparedStatement prepareStatement = conn.prepareStatement("SELECT * FROM " + USERS_TABLE + " WHERE `uuid`=?");
 
-            prepareStatement.setObject(1, Bytes.concat(mostBytes, leastBytes));
+            prepareStatement.setString(1, uuid.toString());
 
             ResultSet resultSet = prepareStatement.executeQuery();
             if (resultSet.next()) {
                 loadedAccount = new Account(resultSet);
-                cache.put(uuid, loadedAccount);
+                cache.put(uuid.toString(), loadedAccount);
             }
         } catch (SQLException sqlEx) {
             plugin.getLogger().error("Error loading account", sqlEx);
@@ -207,13 +203,13 @@ public class Database {
         return null;
     }
 
-    public int getRegistrationsCount(byte[] ip) {
+    public int getRegistrationsCount(String ip) {
         Connection conn = null;
         try {
             conn = getConnection();
 
             PreparedStatement statement = conn.prepareStatement("SELECT COUNT(*) FROM " + USERS_TABLE + " WHERE IP=?");
-            statement.setBytes(1, ip);
+            statement.setString(1, ip);
 
             ResultSet resultSet = statement.executeQuery();
             if (resultSet.next()) {
@@ -235,11 +231,11 @@ public class Database {
             PreparedStatement prepareStatement = conn.prepareStatement("INSERT INTO " + USERS_TABLE
                     + " (`uuid`, `username`, `password`, `ip`, `email`, `lastLogin`) VALUES (?,?,?,?,?,?)");
 
-            prepareStatement.setObject(1, account.uuid().toString());
+            prepareStatement.setString(1, account.uuid());
             prepareStatement.setString(2, account.username());
             prepareStatement.setString(3, account.getPassword());
 
-            prepareStatement.setObject(4, account.ip());
+            prepareStatement.setString(4, account.ip());
 
             prepareStatement.setString(5, account.getEmail());
             prepareStatement.setTimestamp(6, account.getTimestamp());
@@ -271,21 +267,16 @@ public class Database {
         }
     }
 
-    public void flushLoginStatus(Account account, boolean loggedIn) {
+    public void flushLoginStatus(Account account, boolean online) {
         Connection conn = null;
         try {
             conn = getConnection();
 
             PreparedStatement prepareStatement = conn.prepareStatement("UPDATE " + USERS_TABLE
-                    + " SET LoggedIn=? WHERE UUID=?");
+                    + " SET `online`=? WHERE `uuid`=?");
 
-            prepareStatement.setInt(1, loggedIn ? 1 : 0);
-
-            UUID uuid = account.uuid();
-            byte[] mostBytes = Longs.toByteArray(uuid.getMostSignificantBits());
-            byte[] leastBytes = Longs.toByteArray(uuid.getLeastSignificantBits());
-
-            prepareStatement.setObject(2, Bytes.concat(mostBytes, leastBytes));
+            prepareStatement.setInt(1, online ? 1 : 0);
+            prepareStatement.setString(2, account.uuid());
 
             prepareStatement.execute();
         } catch (SQLException ex) {
@@ -317,23 +308,18 @@ public class Database {
             conn = getConnection();
 
             PreparedStatement statement = conn.prepareStatement("UPDATE " + USERS_TABLE
-                    + " SET Username=?, Password=?, IP=?, LastLogin=?, Email=? WHERE UUID=?");
+                    + " SET `username`=?, `password`=?, `ip`=?, `lastLogin`=?, `email`=? WHERE `uuid`=?");
             //username is now changeable by Mojang - so keep it up to date
             statement.setString(1, account.username());
             statement.setString(2, account.getPassword());
-            statement.setObject(3, account.ip());
+            statement.setString(3, account.ip());
 
             statement.setTimestamp(4, account.getTimestamp());
             statement.setString(5, account.getEmail());
+            statement.setString(6, account.uuid());
 
-            UUID uuid = account.uuid();
-
-            byte[] mostBytes = Longs.toByteArray(uuid.getMostSignificantBits());
-            byte[] leastBytes = Longs.toByteArray(uuid.getLeastSignificantBits());
-
-            statement.setObject(6, Bytes.concat(mostBytes, leastBytes));
             statement.execute();
-            cache.put(uuid, account);
+            cache.put(account.uuid(), account);
             return true;
         } catch (SQLException ex) {
             plugin.getLogger().error("Error updating user account", ex);

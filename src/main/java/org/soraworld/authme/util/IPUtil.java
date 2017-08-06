@@ -6,14 +6,13 @@ public class IPUtil {
 
     public static String byte2ipv4(byte[] ip) {
         if (ip != null && ip.length == 4) {
-            return ip[0] + "." + ip[1] + "." + ip[2] + "." + ip[3];
+            return String.format("%d.%d.%d.%d", Math.uint(ip[0]), Math.uint(ip[1]), Math.uint(ip[2]), Math.uint(ip[3]));
         } else {
             return "invalid-ip";
         }
     }
 
     public static String getPlayerIP(Player player) {
-        byte[] ip = player.getConnection().getAddress().getAddress().getAddress();
-        return byte2ipv4(ip);
+        return byte2ipv4(player.getConnection().getAddress().getAddress().getAddress());
     }
 }
