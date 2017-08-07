@@ -36,14 +36,14 @@ public class ResetPwTask implements Runnable {
         }
 
         if (account == null) {
-            src.sendMessage(plugin.getCfgLoader().getTextConfig().getAccountNotFound());
+            src.sendMessage(plugin.loader().getTextConfig().getAccountNotFound());
         } else {
             try {
                 account.setPasswordHash(plugin.getHasher().hash(password));
-                src.sendMessage(plugin.getCfgLoader().getTextConfig().getChangePasswordMessage());
+                src.sendMessage(plugin.loader().getTextConfig().getChangePasswordMessage());
             } catch (Exception ex) {
                 plugin.getLogger().error("Error creating hash", ex);
-                src.sendMessage(plugin.getCfgLoader().getTextConfig().getErrorCommandMessage());
+                src.sendMessage(plugin.loader().getTextConfig().getErrorCommandMessage());
             }
         }
     }

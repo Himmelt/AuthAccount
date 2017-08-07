@@ -15,12 +15,12 @@ public class ProtectionManager {
     private final Authme authme = Authme.getInstance();
 
     public void protect(Player player) {
-        SpawnTeleportConfig teleportConfig = authme.getCfgLoader().getConfig().getTeleportConfig();
+        SpawnTeleportConfig teleportConfig = authme.loader().config().getTeleportConfig();
         if (teleportConfig.isEnabled()) {
             Location<World> spawnLocation = teleportConfig.getSpawnLocation();
             if (spawnLocation != null) {
                 oldLocations.put(player.getUniqueId(), player.getLocation());
-                if (authme.getCfgLoader().getConfig().isSafeLocation()) {
+                if (authme.loader().config().isSafeLocation()) {
                     Sponge.getTeleportHelper().getSafeLocation(spawnLocation).ifPresent(player::setLocation);
                 } else {
                     player.setLocation(spawnLocation);
@@ -30,7 +30,7 @@ public class ProtectionManager {
             Location<World> oldLoc = player.getLocation();
 
             //sometimes players stuck in a wall
-            if (authme.getCfgLoader().getConfig().isSafeLocation()) {
+            if (authme.loader().config().isSafeLocation()) {
                 Sponge.getTeleportHelper().getSafeLocation(oldLoc).ifPresent(player::setLocation);
             } else {
                 player.setLocation(oldLoc);
@@ -44,7 +44,7 @@ public class ProtectionManager {
             return;
         }
 
-        if (authme.getCfgLoader().getConfig().isSafeLocation()) {
+        if (authme.loader().config().isSafeLocation()) {
             Sponge.getTeleportHelper().getSafeLocation(oldLocation).ifPresent(player::setLocation);
         } else {
             player.setLocation(oldLocation);

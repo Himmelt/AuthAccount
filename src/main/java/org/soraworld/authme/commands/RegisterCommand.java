@@ -22,21 +22,21 @@ public class RegisterCommand implements CommandExecutor {
     @Override
     public CommandResult execute(CommandSource source, CommandContext args) throws CommandException {
         if (!(source instanceof Player)) {
-            source.sendMessage(plugin.getCfgLoader().getTextConfig().getPlayersOnlyActionMessage());
+            source.sendMessage(plugin.loader().getTextConfig().getPlayersOnlyActionMessage());
             return CommandResult.success();
         }
 
-        if (plugin.getCfgLoader().getConfig().isPlayerPermissions()
-                && !source.hasPermission(plugin.getContainer().getId() + ".command.register")) {
+        if (plugin.loader().config().isPlayerPermissions()
+                && !source.hasPermission(plugin.plugin().getId() + ".command.register")) {
             throw new CommandPermissionException();
         }
 
         //If the server is using TOTP, no password is required
         if (!args.hasAny("password")) {
-            if ("totp".equals(plugin.getCfgLoader().getConfig().getHashAlgo())) {
+            if ("totp".equals(plugin.loader().config().getHashAlgo())) {
                 startTask(source, "");
             } else {
-                source.sendMessage(plugin.getCfgLoader().getTextConfig().getTotpNotEnabledMessage());
+                source.sendMessage(plugin.loader().getTextConfig().getTotpNotEnabledMessage());
             }
 
             return CommandResult.success();
@@ -46,14 +46,14 @@ public class RegisterCommand implements CommandExecutor {
         List<String> indexPasswords = Lists.newArrayList(passwords);
         String password = indexPasswords.get(0);
         if (password.equals(indexPasswords.get(1))) {
-            if (password.length() >= plugin.getCfgLoader().getConfig().getMinPasswordLength()) {
+            if (password.length() >= plugin.loader().config().getMinPasswordLength()) {
                 //Check if the first two passwords are equal to prevent typos
                 startTask(source, password);
             } else {
-                source.sendMessage(plugin.getCfgLoader().getTextConfig().getTooShortPasswordMessage());
+                source.sendMessage(plugin.loader().getTextConfig().getTooShortPasswordMessage());
             }
         } else {
-            source.sendMessage(plugin.getCfgLoader().getTextConfig().getUnequalPasswordsMessage());
+            source.sendMessage(plugin.loader().getTextConfig().getUnequalPasswordsMessage());
         }
 
         return CommandResult.success();

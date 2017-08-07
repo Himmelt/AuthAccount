@@ -98,7 +98,7 @@ public class Config {
         return playerPermissions;
     }
 
-    public boolean isBypassPermission() {
+    public boolean bypass() {
         return bypassPermission;
     }
 

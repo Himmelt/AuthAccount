@@ -28,9 +28,9 @@ public class unregisterTask implements Runnable {
         accountFound = authme.getDatabase().deleteAccount(identity);
 
         if (accountFound) {
-            source.sendMessage(authme.getCfgLoader().getTextConfig().getAccountDeleted(identity));
+            source.sendMessage(authme.loader().getTextConfig().getAccountDeleted(identity));
         } else {
-            source.sendMessage(authme.getCfgLoader().getTextConfig().getAccountNotFound());
+            source.sendMessage(authme.loader().getTextConfig().getAccountNotFound());
         }
     }
 }

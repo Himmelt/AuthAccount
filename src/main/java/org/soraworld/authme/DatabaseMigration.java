@@ -34,7 +34,7 @@ public class DatabaseMigration {
             }
 
             if (!tableExists) {
-                if (plugin.getCfgLoader().getConfig().getSqlConfiguration().getType() == SQLType.SQLITE) {
+                if (plugin.loader().config().getSqlConfiguration().getType() == SQLType.SQLITE) {
                     Statement statement = conn.createStatement();
                     statement.execute("CREATE TABLE " + Database.USERS_TABLE + " ( "
                             + "`userid` INTEGER PRIMARY KEY AUTOINCREMENT, "

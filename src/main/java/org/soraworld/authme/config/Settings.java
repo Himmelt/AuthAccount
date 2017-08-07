@@ -75,7 +75,7 @@ public class Settings {
         }
     }
 
-    public Config getConfig() {
+    public Config config() {
         if (configMapper == null) {
             return null;
         }

@@ -41,7 +41,7 @@ public class ForceRegisterCommand implements CommandExecutor {
     private void onNameRegister(CommandSource src, String accountId, String password) {
         Optional<Player> player = Sponge.getServer().getPlayer(accountId);
         if (player.isPresent()) {
-            src.sendMessage(plugin.getCfgLoader().getTextConfig().getForceRegisterOnlineMessage());
+            src.sendMessage(plugin.loader().getTextConfig().getForceRegisterOnlineMessage());
         } else {
             UUID offlineUUID = UUID.nameUUIDFromBytes(("OfflinePlayer:" + accountId).getBytes(Charsets.UTF_8));
 
@@ -58,7 +58,7 @@ public class ForceRegisterCommand implements CommandExecutor {
         UUID uuid = UUID.fromString(accountId);
         Optional<Player> player = Sponge.getServer().getPlayer(uuid);
         if (player.isPresent()) {
-            src.sendMessage(plugin.getCfgLoader().getTextConfig().getForceRegisterOnlineMessage());
+            src.sendMessage(plugin.loader().getTextConfig().getForceRegisterOnlineMessage());
         } else {
             Sponge.getScheduler().createTaskBuilder()
                     //Async as it could run a SQL query

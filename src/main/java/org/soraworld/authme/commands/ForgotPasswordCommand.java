@@ -34,34 +34,34 @@ public class ForgotPasswordCommand implements CommandExecutor {
     @Override
     public CommandResult execute(CommandSource src, CommandContext args) throws CommandException {
         if (!(src instanceof Player)) {
-            src.sendMessage(plugin.getCfgLoader().getTextConfig().getPlayersOnlyActionMessage());
+            src.sendMessage(plugin.loader().getTextConfig().getPlayersOnlyActionMessage());
             return CommandResult.success();
         }
 
-        if (plugin.getCfgLoader().getConfig().isPlayerPermissions()
-                && !src.hasPermission(plugin.getContainer().getId() + ".command.forgot")) {
+        if (plugin.loader().config().isPlayerPermissions()
+                && !src.hasPermission(plugin.plugin().getId() + ".command.forgot")) {
             throw new CommandPermissionException();
         }
 
         Player player = (Player) src;
         Account account = plugin.getDatabase().getAccountIfPresent(player);
         if (account == null) {
-            src.sendMessage(plugin.getCfgLoader().getTextConfig().getAccountNotLoadedMessage());
+            src.sendMessage(plugin.loader().getTextConfig().getAccountNotLoadedMessage());
             return CommandResult.success();
         } else if (account.isOnline()) {
-            src.sendMessage(plugin.getCfgLoader().getTextConfig().getAlreadyLoggedInMessage());
+            src.sendMessage(plugin.loader().getTextConfig().getAlreadyLoggedInMessage());
             return CommandResult.success();
         }
 
         String email = account.getEmail();
         if (email == null || email.isEmpty()) {
-            src.sendMessage(plugin.getCfgLoader().getTextConfig().getUncommittedEmailAddressMessage());
+            src.sendMessage(plugin.loader().getTextConfig().getUncommittedEmailAddressMessage());
             return CommandResult.success();
         }
 
         String password = Rand.randString(8);
 
-        EmailConfiguration emailConfig = plugin.getCfgLoader().getConfig().getEmailConfiguration();
+        EmailConfiguration emailConfig = plugin.loader().config().getEmailConfiguration();
 
         Properties properties = new Properties();
         properties.setProperty("mail.smtp.host", emailConfig.getHost());
@@ -105,7 +105,7 @@ public class ForgotPasswordCommand implements CommandExecutor {
         } catch (Exception ex) {
             plugin.getLogger().error("Error executing command", ex);
             src.sendMessage(Text.of(TextColors.DARK_RED
-                    , plugin.getCfgLoader().getTextConfig().getErrorCommandMessage()));
+                    , plugin.loader().getTextConfig().getErrorCommandMessage()));
         }
 
         return CommandResult.success();

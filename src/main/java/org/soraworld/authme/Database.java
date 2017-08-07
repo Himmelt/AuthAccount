@@ -31,7 +31,7 @@ public class Database {
     private SqlService sql;
 
     public Database() {
-        SQLConfiguration sqlConfig = plugin.getCfgLoader().getConfig().getSqlConfiguration();
+        SQLConfiguration sqlConfig = plugin.loader().config().getSqlConfiguration();
 
         if (sqlConfig.getType() == SQLType.MYSQL) {
             this.username = sqlConfig.getUsername();
@@ -43,7 +43,7 @@ public class Database {
         }
 
         String storagePath = sqlConfig.getPath()
-                .replace("%DIR%", plugin.getCfgLoader().getConfigDir().normalize().toString());
+                .replace("%DIR%", plugin.loader().getConfigDir().normalize().toString());
 
         StringBuilder urlBuilder = new StringBuilder("jdbc:")
                 .append(sqlConfig.getType().name().toLowerCase()).append("://");

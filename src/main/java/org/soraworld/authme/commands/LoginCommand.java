@@ -19,18 +19,18 @@ public class LoginCommand implements CommandExecutor {
     @Override
     public CommandResult execute(CommandSource source, CommandContext args) throws CommandException {
         if (!(source instanceof Player)) {
-            source.sendMessage(plugin.getCfgLoader().getTextConfig().getPlayersOnlyActionMessage());
+            source.sendMessage(plugin.loader().getTextConfig().getPlayersOnlyActionMessage());
             return CommandResult.empty();
         }
 
-        if (plugin.getCfgLoader().getConfig().isPlayerPermissions()
-                && !source.hasPermission(plugin.getContainer().getId() + ".command.login")) {
+        if (plugin.loader().config().isPlayerPermissions()
+                && !source.hasPermission(plugin.plugin().getId() + ".command.login")) {
             throw new CommandPermissionException();
         }
 
         Account account = plugin.getDatabase().getAccountIfPresent((Player) source);
         if (account != null && account.isOnline()) {
-            source.sendMessage(plugin.getCfgLoader().getTextConfig().getAlreadyLoggedInMessage());
+            source.sendMessage(plugin.loader().getTextConfig().getAlreadyLoggedInMessage());
         }
 
         //the arg isn't optional. We can be sure there is value

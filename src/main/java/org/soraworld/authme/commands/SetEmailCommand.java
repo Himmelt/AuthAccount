@@ -21,12 +21,12 @@ public class SetEmailCommand implements CommandExecutor {
     @Override
     public CommandResult execute(CommandSource src, CommandContext args) throws CommandException {
         if (!(src instanceof Player)) {
-            src.sendMessage(plugin.getCfgLoader().getTextConfig().getPlayersOnlyActionMessage());
+            src.sendMessage(plugin.loader().getTextConfig().getPlayersOnlyActionMessage());
             return CommandResult.empty();
         }
 
-        if (plugin.getCfgLoader().getConfig().isPlayerPermissions()
-                && !src.hasPermission(plugin.getContainer().getId() + ".command.email")) {
+        if (plugin.loader().config().isPlayerPermissions()
+                && !src.hasPermission(plugin.plugin().getId() + ".command.email")) {
             throw new CommandPermissionException();
         }
 
@@ -35,7 +35,7 @@ public class SetEmailCommand implements CommandExecutor {
             Account account = plugin.getDatabase().getAccountIfPresent((Player) src);
             if (account != null) {
                 account.setEmail(email);
-                src.sendMessage(plugin.getCfgLoader().getTextConfig().getEmailSetMessage());
+                src.sendMessage(plugin.loader().getTextConfig().getEmailSetMessage());
                 Sponge.getScheduler().createTaskBuilder()
                         .async()
                         .execute(new SaveTask(account))
@@ -45,7 +45,7 @@ public class SetEmailCommand implements CommandExecutor {
             return CommandResult.success();
         }
 
-        src.sendMessage(plugin.getCfgLoader().getTextConfig().getNotEmailMessage());
+        src.sendMessage(plugin.loader().getTextConfig().getNotEmailMessage());
         return CommandResult.success();
     }
 }

@@ -78,7 +78,7 @@ public class Authme {
         database = new Database();
         database.createTable();
 
-        if ("totp".equalsIgnoreCase(configuration.getConfig().getHashAlgo())) {
+        if ("totp".equalsIgnoreCase(configuration.config().getHashAlgo())) {
             hasher = new TOTP();
         } else {
             //use bcrypt as fallback for now
@@ -171,7 +171,7 @@ public class Authme {
         database = new Database();
         database.createTable();
 
-        if ("totp".equalsIgnoreCase(configuration.getConfig().getHashAlgo())) {
+        if ("totp".equalsIgnoreCase(configuration.config().getHashAlgo())) {
             hasher = new TOTP();
         } else {
             //use bcrypt as fallback for now
@@ -182,11 +182,11 @@ public class Authme {
         game.getServer().getOnlinePlayers().forEach(database::loadAccount);
     }
 
-    public Settings getCfgLoader() {
+    public Settings loader() {
         return configuration;
     }
 
-    public PluginContainer getContainer() {
+    public PluginContainer plugin() {
         return plugin;
     }
 

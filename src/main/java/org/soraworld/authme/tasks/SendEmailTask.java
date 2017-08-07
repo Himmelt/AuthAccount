@@ -24,7 +24,7 @@ public class SendEmailTask implements Runnable {
     @Override
     public void run() {
         try {
-            EmailConfiguration emailConfig = plugin.getCfgLoader().getConfig().getEmailConfiguration();
+            EmailConfiguration emailConfig = plugin.loader().config().getEmailConfiguration();
 
             //connect to host and send message
             if (!transport.isConnected()) {
@@ -32,10 +32,10 @@ public class SendEmailTask implements Runnable {
             }
 
             transport.sendMessage(email, email.getAllRecipients());
-            player.sendMessage(plugin.getCfgLoader().getTextConfig().getMailSent());
+            player.sendMessage(plugin.loader().getTextConfig().getMailSent());
         } catch (Exception ex) {
             plugin.getLogger().error("Error sending email", ex);
-            player.sendMessage(plugin.getCfgLoader().getTextConfig().getErrorCommandMessage());
+            player.sendMessage(plugin.loader().getTextConfig().getErrorCommandMessage());
         }
     }
 }

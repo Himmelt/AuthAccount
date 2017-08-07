@@ -14,10 +14,9 @@ import org.spongepowered.api.event.command.SendCommandEvent;
 import org.spongepowered.api.event.entity.DamageEntityEvent;
 import org.spongepowered.api.event.entity.MoveEntityEvent;
 import org.spongepowered.api.event.filter.cause.First;
-import org.spongepowered.api.event.item.inventory.ChangeInventoryEvent;
-import org.spongepowered.api.event.item.inventory.DropItemEvent;
-import org.spongepowered.api.event.item.inventory.UseItemStackEvent;
+import org.spongepowered.api.event.item.inventory.*;
 import org.spongepowered.api.event.message.MessageChannelEvent;
+import org.spongepowered.api.text.Text;
 
 import java.util.List;
 import java.util.Optional;
@@ -27,7 +26,7 @@ public class PreventListener {
 
     private final Authme authme = Authme.getInstance();
 
-    @Listener(order = Order.EARLY)
+    @Listener(order = Order.AFTER_PRE)
     public void onPlayerMove(MoveEntityEvent event, @First Player player) {
         Vector3d oldLocation = event.getFromTransform().getPosition();
         Vector3d newLocation = event.getToTransform().getPosition();
@@ -37,9 +36,21 @@ public class PreventListener {
         }
     }
 
+    @Listener(order = Order.AFTER_PRE)
+    public void onInteractItem(InteractItemEvent event, @First Player player) {
+        checkLoginStatus(event, player);
+    }
+
+    @Listener(order = Order.AFTER_PRE)
+    public void onInventoryOpen(InteractInventoryEvent.Open event, @First Player player) {
+        checkLoginStatus(event, player);
+    }
+
     @Listener
     public void onChat(MessageChannelEvent.Chat event, @First Player player) {
-        checkLoginStatus(event, player);
+        if (!checkLoginStatus(event, player)) {
+            player.sendMessage(Text.of("您没有执行该操作的权限,请先登录!"));
+        }
     }
 
     @Listener(order = Order.EARLY)
@@ -53,7 +64,7 @@ public class PreventListener {
 
         //do not blacklist our own commands
         if (authme.getGame().getCommandManager()
-                .getOwnedBy(authme.getContainer())
+                .getOwnedBy(authme.plugin())
                 .stream()
                 .map(CommandMapping::getPrimaryAlias)
                 .collect(Collectors.toSet())
@@ -61,16 +72,18 @@ public class PreventListener {
             return;
         }
 
-        if (authme.getCfgLoader().getConfig().isCommandOnlyProtection()) {
-            List<String> protectedCommands = authme.getCfgLoader().getConfig().getProtectedCommands();
+        if (authme.loader().config().isCommandOnlyProtection()) {
+            List<String> protectedCommands = authme.loader().config().getProtectedCommands();
             if ((protectedCommands.isEmpty() || protectedCommands.contains(command))) {
                 if (!authme.getDatabase().isOnline(player)) {
-                    player.sendMessage(authme.getCfgLoader().getTextConfig().getProtectedCommand());
+                    player.sendMessage(authme.loader().getTextConfig().getProtectedCommand());
                     event.setCancelled(true);
                 }
             }
         } else {
-            checkLoginStatus(event, player);
+            if (!checkLoginStatus(event, player)) {
+                player.sendMessage(Text.of("您没有执行该操作的权限,请先登录!"));
+            }
         }
     }
 
@@ -81,7 +94,7 @@ public class PreventListener {
         }
     }
 
-    @Listener(order = Order.EARLY)
+    @Listener(order = Order.AFTER_PRE)
     public void onItemConsume(UseItemStackEvent.Start event, @First Player player) {
         checkLoginStatus(event, player);
     }
@@ -96,7 +109,7 @@ public class PreventListener {
         checkLoginStatus(event, player);
     }
 
-    @Listener(order = Order.FIRST)
+    @Listener(order = Order.AFTER_PRE)
     public void onBlockInteract(InteractBlockEvent event, @First Player player) {
         checkLoginStatus(event, player);
     }
@@ -116,20 +129,20 @@ public class PreventListener {
         }
     }
 
-    private void checkLoginStatus(Cancellable event, Player player) {
-        if (authme.getCfgLoader().getConfig().isBypassPermission()
-                && player.hasPermission(authme.getContainer().getId() + ".bypass")) {
-            return;
+    private boolean checkLoginStatus(Cancellable event, Player player) {
+        if (authme.loader().config().bypass() && player.hasPermission(authme.plugin().getId() + ".bypass")) {
+            return true;
         }
-
-        if (authme.getCfgLoader().getConfig().isCommandOnlyProtection()) {
+        if (authme.loader().config().isCommandOnlyProtection()) {
             //check if the user is already registered
-            if (authme.getDatabase().getAccountIfPresent(player) == null
-                    && player.hasPermission(authme.getContainer().getId() + ".registerRequired")) {
+            if (authme.getDatabase().getAccountIfPresent(player) == null && player.hasPermission(authme.plugin().getId() + ".registerRequired")) {
                 event.setCancelled(true);
+                return false;
             }
         } else if (!authme.getDatabase().isOnline(player)) {
             event.setCancelled(true);
+            return false;
         }
+        return true;
     }
 }

@@ -41,20 +41,20 @@ public class LogoutCommand implements CommandExecutor {
     @Override
     public CommandResult execute(CommandSource source, CommandContext args) throws CommandException {
         if (!(source instanceof Player)) {
-            source.sendMessage(plugin.getCfgLoader().getTextConfig().getPlayersOnlyActionMessage());
+            source.sendMessage(plugin.loader().getTextConfig().getPlayersOnlyActionMessage());
             return CommandResult.success();
         }
 
-        if (plugin.getCfgLoader().getConfig().isPlayerPermissions()
-                && !source.hasPermission(plugin.getContainer().getId() + ".command.logout")) {
+        if (plugin.loader().config().isPlayerPermissions()
+                && !source.hasPermission(plugin.plugin().getId() + ".command.logout")) {
             throw new CommandPermissionException();
         }
 
         Account account = plugin.getDatabase().getAccountIfPresent((Player) source);
         if (account == null || !account.isOnline()) {
-            source.sendMessage(plugin.getCfgLoader().getTextConfig().getNotLoggedInMessage());
+            source.sendMessage(plugin.loader().getTextConfig().getNotLoggedInMessage());
         } else {
-            source.sendMessage(plugin.getCfgLoader().getTextConfig().getSuccessfullyLoggedOutMessage());
+            source.sendMessage(plugin.loader().getTextConfig().getSuccessfullyLoggedOutMessage());
             account.setOnline(false);
             account.setIp("empty");
 
@@ -63,7 +63,7 @@ public class LogoutCommand implements CommandExecutor {
                     .execute(() -> {
                         //flushes the ip update
                         plugin.getDatabase().save(account);
-                        if (plugin.getCfgLoader().getConfig().isUpdateLoginStatus()) {
+                        if (plugin.loader().config().isUpdateLoginStatus()) {
                             plugin.getDatabase().flushLoginStatus(account, false);
                         }
                     })

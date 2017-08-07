@@ -29,8 +29,8 @@ public class RegisterTask implements Runnable {
     public void run() {
         if (authme.getDatabase().loadAccount(player) == null) {
             int regByIp = authme.getDatabase().getRegistrationsCount(IPUtil.getPlayerIP(player));
-            if (authme.getCfgLoader().getConfig().getMaxIpReg() >= 1 && regByIp >= authme.getCfgLoader().getConfig().getMaxIpReg()) {
-                player.sendMessage(authme.getCfgLoader().getTextConfig().getMaxIpRegMessage());
+            if (authme.loader().config().getMaxIpReg() >= 1 && regByIp >= authme.loader().config().getMaxIpReg()) {
+                player.sendMessage(authme.loader().getTextConfig().getMaxIpRegMessage());
                 return;
             }
 
@@ -42,13 +42,13 @@ public class RegisterTask implements Runnable {
                 }
 
                 //thread-safe, because it's immutable after config load
-                if ("totp".equalsIgnoreCase(authme.getCfgLoader().getConfig().getHashAlgo())) {
+                if ("totp".equalsIgnoreCase(authme.loader().config().getHashAlgo())) {
                     sendTotpHint(hashedPassword);
                 }
 
-                player.sendMessage(authme.getCfgLoader().getTextConfig().getAccountCreated());
+                player.sendMessage(authme.loader().getTextConfig().getAccountCreated());
                 createdAccount.setOnline(true);
-                if (authme.getCfgLoader().getConfig().isUpdateLoginStatus()) {
+                if (authme.loader().config().isUpdateLoginStatus()) {
                     authme.getDatabase().flushLoginStatus(createdAccount, true);
                 }
 
@@ -57,10 +57,10 @@ public class RegisterTask implements Runnable {
                         .submit(authme);
             } catch (Exception ex) {
                 authme.getLogger().error("Error creating hash", ex);
-                player.sendMessage(authme.getCfgLoader().getTextConfig().getErrorCommandMessage());
+                player.sendMessage(authme.loader().getTextConfig().getErrorCommandMessage());
             }
         } else {
-            player.sendMessage(authme.getCfgLoader().getTextConfig().getAccountAlreadyExists());
+            player.sendMessage(authme.loader().getTextConfig().getAccountAlreadyExists());
         }
     }
 
@@ -70,13 +70,13 @@ public class RegisterTask implements Runnable {
         try {
             URL barcodeUrl = new URL(TOTP.getQRBarcodeURL(player.getName(), host, secretCode));
             player.sendMessage(Text.builder()
-                    .append(authme.getCfgLoader().getTextConfig().getKeyGenerated())
+                    .append(authme.loader().getTextConfig().getKeyGenerated())
                     .build());
             player.sendMessage(Text.builder(secretCode)
                     .color(TextColors.GOLD)
                     .append(Text.of(TextColors.DARK_BLUE, " / "))
                     .append(Text.builder()
-                            .append(authme.getCfgLoader().getTextConfig().getScanQr())
+                            .append(authme.loader().getTextConfig().getScanQr())
                             .onClick(TextActions.openUrl(barcodeUrl))
                             .build())
                     .build());
