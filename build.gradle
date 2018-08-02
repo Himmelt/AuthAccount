@@ -1,8 +1,5 @@
 buildscript {
     repositories {
-        maven {
-            url 'http://localhost/nexus/content/groups/public/'
-        }
         jcenter()
         maven {
             name = 'gradle-plugins'
