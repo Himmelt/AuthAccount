@@ -20,15 +20,15 @@ public class UnregisterCommand implements CommandExecutor {
     private final Authme plugin = Authme.getInstance();
 
     @Override
-    public CommandResult execute(CommandSource src, CommandContext args) throws CommandException {
+    public CommandResult execute(CommandSource src, CommandContext args) {
         String account = args.<String>getOne("account").get();
         if (account.matches(UUID_REGEX)) {
             //check if the account is an UUID
             UUID uuid = UUID.fromString(account);
-           Sponge.getScheduler().createTaskBuilder()
+            Sponge.getScheduler().createTaskBuilder()
                     //Async as it could run a SQL query
                     .async()
-                   .execute(new unregisterTask(src, uuid))
+                    .execute(new unregisterTask(src, uuid))
                     .submit(plugin);
             return CommandResult.success();
         } else if (account.matches(VALID_USERNAME)) {

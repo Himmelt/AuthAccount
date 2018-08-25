@@ -5,6 +5,7 @@ import com.google.inject.Inject;
 import ninja.leaping.configurate.commented.CommentedConfigurationNode;
 import ninja.leaping.configurate.loader.ConfigurationLoader;
 import org.slf4j.Logger;
+import org.soraworld.authme.command.CommandAuthme;
 import org.soraworld.authme.commands.*;
 import org.soraworld.authme.config.Settings;
 import org.soraworld.authme.constant.Constant;
@@ -13,6 +14,10 @@ import org.soraworld.authme.hasher.Hasher;
 import org.soraworld.authme.hasher.TOTP;
 import org.soraworld.authme.listener.ConnectionListener;
 import org.soraworld.authme.listener.PreventListener;
+import org.soraworld.authme.manager.AuthmeManager;
+import org.soraworld.violet.command.SpongeCommand;
+import org.soraworld.violet.manager.SpongeManager;
+import org.soraworld.violet.plugin.SpongePlugin;
 import org.spongepowered.api.Game;
 import org.spongepowered.api.command.CommandManager;
 import org.spongepowered.api.command.args.GenericArguments;
@@ -26,11 +31,18 @@ import org.spongepowered.api.plugin.Plugin;
 import org.spongepowered.api.plugin.PluginContainer;
 import org.spongepowered.api.text.Text;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Map;
 
-@Plugin(id = Constant.MODID, name = Constant.NAME, version = Constant.VERSION)
-public class Authme {
+@Plugin(
+        id = Constant.MODID,
+        name = Constant.NAME,
+        version = Constant.VERSION
+)
+public class Authme extends SpongePlugin {
 
     private final Game game;
     @Inject
@@ -153,6 +165,21 @@ public class Authme {
         game.getEventManager().registerListeners(this, new PreventListener());
     }
 
+    @Nonnull
+    protected SpongeManager registerManager(Path path) {
+        return new AuthmeManager(this, path);
+    }
+
+    @Nonnull
+    protected SpongeCommand registerCommand() {
+        return new CommandAuthme(null, false, manager, "authme");
+    }
+
+    @Nullable
+    protected List<Object> registerListeners() {
+        return null;
+    }
+
     @Listener
     public void onDisable(GameStoppedServerEvent gameStoppedEvent) {
         //run this task sync in order let it finish before the process ends
@@ -213,5 +240,10 @@ public class Authme {
     public Hasher getHasher() {
         //this is thread-safe because it won't change after config load
         return hasher;
+    }
+
+    @Nonnull
+    public String assetsId() {
+        return getId();
     }
 }
