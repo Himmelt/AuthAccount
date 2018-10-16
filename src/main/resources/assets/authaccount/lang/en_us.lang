@@ -1,0 +1,109 @@
+# English Language File
+# Please keep UTF-8 encoding
+
+chatHead = "[AuthAccount] "
+
+comment {
+  general = "General settings"
+  database = "Database settings"
+  email = "E-mail server settings"
+}
+
+comment = "When the account does not exist on the account database."
+playersAccountNotLoaded = "§4Your account cannot be loaded.";
+
+comment = "If the player is logged in, it is then pointless to use the forgot password command"
+playersAccountAlreadyLoggedIn = "§4You are already logged in!";
+
+comment = "When the player did not or forgot to submit an email address used to recover a password."
+uncommittedEmailAddress = "§4You did not submit an email address!";
+
+comment = "When an unexpected error occurs. (Should not happen)"
+errorExecutingCommand = "§4Error executing command, see console.";
+
+comment = "Whe the player successfully logs out of his/her account."
+loggedOut = "§2Logged out.";
+
+comment = "When the player is not logged in of his/her account."
+notLoggedIn = "§4Not logged in. Type /login to login in";
+
+comment = "When the player is not logged in of his/her account."
+notRegistered = "§4Not registered. Type /register to register";
+
+comment = "When totp is not enabled."
+totpNotEnabled = "§4Totp is not enabled. You have to enter two passwords.";
+
+comment = "When the two passwords typed do not match each other."
+unevenPasswords = "§4The passwords are not equal.";
+
+comment = "When the player successfully used the set email command and set his/her email."
+emailSet = "§2Your email was set.";
+
+comment = "When the player enters an email that does not exist."
+notEmail = "§4You have entered in an invalid email!";
+
+comment = "When the unregister process failed."
+unregisterFailed = "§4Your request is neither a player name or uuid.";
+
+comment = "When a player successfully logs in."
+loggedIn = "§2Logged in";
+
+comment = "When a player enters an incorrect password."
+incorrectPassword = "§4Incorrect password";
+
+comment = "When the recovery email was sent!"
+mailSent = "§2Email sent";
+
+comment = "When a player's account does not exist."
+accountNotFound = "§4Account not found";
+
+comment = "When a player joined with a non Mojang valid username"
+invalidUsername = "§4Invalid username - Choose characters a-z,A-Z,0-9 and a length between 2 and 16";
+
+comment = "When an account was successfully deleted"
+accountDeleted = "§2Deleted account of %s";
+
+comment = "When an account already exists, and therefore cannot be created."
+accountAlreadyExists = "§4Account already exists";
+
+comment = "When the player successfully created his/her account."
+accountCreated = "§2Account created";
+
+comment = "When a secretkey is created (header)."
+keyGenerated = "§2SecretKey genereted: ";
+
+comment = "When a player registered using TOTP and the code can be scanned by clicking on it"
+scanQr = "§6Click here to scan the QR-Code";
+
+comment = "When the user tries to execute a protected command if command only protection is enabled"
+protectedCommand = "§4This command is protected. Please login";
+
+comment = "When the player is auto logged in by using the same ip as the last login"
+ipAutoLogin = "§2Auto logged in";
+
+comment = "Kick message if the player doesn't logged during the configured time out seconds"
+timeoutReason = "§4Login timeout";
+
+comment = "Message if the player changed his account password successfully"
+changePassword = "§2Successfull changed password";
+
+comment = "Message if the player has to register with a longer password"
+tooShortPassword = "§2Your password is too short";
+
+comment = "User reached max attempts"
+maxAttempts = "§2You entered too many times a wrong password";
+
+comment = "User reached the max ip registrations"
+maxIpReg = "§2You reached the max amount of registrations for this ip-address";
+
+comment = "Admin reloaded the plugin"
+onReload = "§4Successfull reloaded plugin";
+
+comment = "Force register failed because the player is online"
+forceRegisterOnline = "§2Cannot force register player. That player is online";
+
+comment = "Successfull force registered an account"
+forceRegisterSuccess = "§4Force register success";
+
+comment = "Another player with the same name tried to join the server while that player is still online"
+alreadyOnline = "§2You are already online";

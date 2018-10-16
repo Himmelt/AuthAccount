@@ -1,33 +1,48 @@
+buildscript {
+    repositories {
+        maven {
+            name = 'aliyun'
+            url = 'https://maven.aliyun.com/repository/public'
+        }
+        maven {
+            name = 'lss233'
+            url = 'https://www.lss233.com/artifactory/minecraft'
+        }
+    }
+}
+
 plugins {
-    id 'org.spongepowered.plugin' version '0.8.1'
+    id 'org.spongepowered.plugin' version '0.9.0'
 }
 
 apply plugin: 'java'
 
 group = 'org.soraworld'
 version = '1.0.0'
-archivesBaseName = "Authme-sponge"
+archivesBaseName = "AuthAccount"//"authentication"
 
 sourceCompatibility = targetCompatibility = 1.8
 
 repositories {
     jcenter()
+    maven {
+        name = 'aliyun'
+        url = 'https://maven.aliyun.com/repository/public'
+    }
+    maven {
+        name = 'lss233'
+        url = 'https://www.lss233.com/artifactory/minecraft'
+    }
 }
 
-sponge {
-    plugin {
-        id = 'authme'
-    }
+dependencies {
+    compile 'org.soraworld:violet-sponge:2.3.6'
+    compile 'org.spongepowered:spongeapi:7.1.0-SNAPSHOT'
+    compile 'org.mindrot:jbcrypt:0.4'
+    compile 'javax.mail:javax.mail-api:1.6.2'
+    //compile 'com.sun.mail:javax.mail:1.6.0'
 }
 
 tasks.withType(JavaCompile) {
     options.encoding = "UTF-8"
-}
-
-dependencies {
-    compile 'org.spongepowered:spongeapi:7.1.0-SNAPSHOT'
-    compile 'org.soraworld:violet-sponge:2.2.7'
-    compile 'org.mindrot:jbcrypt:0.4'
-    compile 'com.sun.mail:javax.mail:1.6.0'
-    testCompile 'junit:junit:4.12'
 }
