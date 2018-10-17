@@ -28,20 +28,6 @@ public class LoginCommand implements CommandExecutor {
             throw new CommandPermissionException();
         }
 
-        Account account = plugin.getDatabase().getAccountIfPresent((Player) source);
-        if (account != null && account.isOnline()) {
-            source.sendMessage(plugin.loader().getTextConfig().getAlreadyLoggedInMessage());
-        }
-
-        //the arg isn't optional. We can be sure there is value
-        String password = args.<String>getOne("password").get();
-
-        Sponge.getScheduler().createTaskBuilder()
-                //we are executing a SQL Query which is blocking
-                .async()
-                .execute(new LoginTask((Player) source, password))
-                .name("Login Query")
-                .submit(plugin);
 
         return CommandResult.success();
     }

@@ -5,6 +5,7 @@ import org.soraworld.account.manager.AccountManager;
 import org.soraworld.violet.command.Args;
 import org.soraworld.violet.command.SpongeCommand;
 import org.soraworld.violet.command.Sub;
+import org.spongepowered.api.Sponge;
 import org.spongepowered.api.command.CommandSource;
 import org.spongepowered.api.entity.living.player.Player;
 
@@ -29,9 +30,39 @@ public final class CommandAccount {
 
     }
 
-    @Sub(onlyPlayer = true, aliases = {"changepswd"}, usage = "/account changepswd <old> <new>")
+    @Sub(onlyPlayer = true, aliases = {"changepswd"}, usage = "/account changepswd <old> <new> <new>")
     public static void changepassword(SpongeCommand self, CommandSource sender, Args args) {
+        Player player = (Player) sender;
+        AccountManager manager = (AccountManager) self.manager;
+        Account account = manager.getDatabase().getAccountIfPresent(player);
 
+        if (account != null && account.isOnline()) {
+            if (args.size() == 3) {
+                if (account.checkPassword(manager, args.first())) {
+                    // TODO password format check
+                    String password = args.get(1);
+                    if (!password.isEmpty() && password.equals(args.get(2))) {
+                        try {
+                            //Check if the first two passwords are equal to prevent typos
+                            String hash = AccountManager.hasher.hash(password);
+                            Sponge.getScheduler().createTaskBuilder()
+                                    //we are executing a SQL Query which is blocking
+                                    .async()
+                                    .name("Register Query")
+                                    .execute(() -> {
+                                        account.setPasswordHash(hash);
+                                        if (manager.getDatabase().save(account)) {
+                                            manager.sendKey(player, "ChangePasswordMessage");
+                                        } else manager.sendKey(player, "ErrorCommandMessage");
+                                    }).submit(manager.getPlugin());
+                        } catch (Exception e) {
+                            if (manager.isDebug()) e.printStackTrace();
+                            manager.consoleKey("ErrorCommandMessage");
+                        }
+                    } else manager.sendKey(player, "UnequalPasswordsMessage");
+                } else manager.sendKey(player, "wrongOldPswd");
+            } else manager.sendKey(player, "invalidArgs");
+        } else manager.sendKey(player, "NotLoggedInMessage");
     }
 
     @Sub(onlyPlayer = true, aliases = {"mail"}, usage = "/account emailSetting [mail-address]")

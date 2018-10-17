@@ -49,7 +49,7 @@ public class Account {
         this.email = resultSet.getString(7);
     }
 
-    public boolean checkPassword(AccountManager manager, String userInput) throws Exception {
+    public boolean checkPassword(AccountManager manager, String userInput) {
         return AccountManager.hasher.checkPassword(passwordHash, userInput);
     }
 

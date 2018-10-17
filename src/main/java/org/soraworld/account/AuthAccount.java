@@ -38,7 +38,7 @@ public class AuthAccount extends SpongePlugin {
         command.extractSub(SpongeBaseSubs.class);
         command.extractSub(CommandAccount.class);
         register(this, command);
-        register(this, new CommandLogin("login", null, false, manager, "log", "l"));
+        register(this, new CommandLogin("login", null, (AccountManager) manager, "log", "l"));
     }
 
     public void beforeDisable() {
