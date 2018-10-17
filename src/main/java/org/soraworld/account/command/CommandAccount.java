@@ -11,6 +11,7 @@ import org.spongepowered.api.command.CommandSource;
 import org.spongepowered.api.entity.living.player.Player;
 import org.spongepowered.api.scheduler.Task;
 
+import java.util.UUID;
 import java.util.regex.Pattern;
 
 public final class CommandAccount {
@@ -48,7 +49,24 @@ public final class CommandAccount {
 
     @Sub(path = "admin.unregister", perm = "admin", aliases = {"unreg"}, usage = "/account admin unreg <account> [confirm]")
     public static void admin_unregister(SpongeCommand self, CommandSource sender, Args args) {
-
+        AccountManager manager = (AccountManager) self.manager;
+        if (args.notEmpty()) {
+            String text = args.first();
+            try {
+                UUID uuid = UUID.fromString(text);
+                Task.builder().async().execute(() -> {
+                    Account acc = manager.database.deleteAccount(uuid);
+                    if (acc != null) manager.sendKey(sender, "AccountDeleted", acc.username(), acc.uuid());
+                    else manager.sendKey(sender, "AccountNotFound");
+                }).submit(manager.getPlugin());
+            } catch (Throwable e) {
+                Task.builder().async().execute(() -> {
+                    Account acc = manager.database.deleteAccount(text);
+                    if (acc != null) manager.sendKey(sender, "AccountDeleted", acc.username(), acc.uuid());
+                    else manager.sendKey(sender, "AccountNotFound");
+                }).submit(manager.getPlugin());
+            }
+        } else manager.sendKey(sender, "emptyArgs");
     }
 
     @Sub(perm = "admin", aliases = {"resetpswd"}, usage = "/account resetpswd <account>")
@@ -96,7 +114,7 @@ public final class CommandAccount {
         } else manager.sendKey(player, "NotLoggedInMessage");
     }
 
-    @Sub(onlyPlayer = true, aliases = {"mail"}, usage = "/account emailSetting [mail-address]")
+    @Sub(onlyPlayer = true, aliases = {"mail"}, usage = "/account email [mail-address]")
     public static void email(SpongeCommand self, CommandSource sender, Args args) {
         Player player = (Player) sender;
         AccountManager manager = (AccountManager) self.manager;

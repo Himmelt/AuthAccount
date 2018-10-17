@@ -33,7 +33,7 @@ public class AccountManager extends SpongeManager {
     public SpawnSetting spawn = new SpawnSetting();
     @Setting(path = "database", comment = "comment.database")
     public DatabaseSetting databaseSetting = new DatabaseSetting();
-    @Setting(comment = "comment.emailSetting")
+    @Setting(comment = "comment.email")
     public EmailSetting emailSetting = new EmailSetting();
 
     public final Database database;
@@ -115,11 +115,11 @@ public class AccountManager extends SpongeManager {
 
         Session session = Session.getDefaultInstance(properties);
 
-        //prepare emailSetting
+        //prepare email
         MimeMessage message = new MimeMessage(session);
         try {
             String YuiAccount = emailSetting.getAccount();
-            //sender emailSetting with an alias
+            //sender email with an alias
             message.setFrom(new InternetAddress(YuiAccount, emailSetting.getSenderName()));
             message.setRecipient(Message.RecipientType.TO, new InternetAddress(account.getEmail(), account.username()));
             message.setSubject(replace(emailSetting.getSubject(), account, password));
@@ -132,7 +132,7 @@ public class AccountManager extends SpongeManager {
             message.setContent(htmlContent, "text/html;charset=utf-8");
             //we only need to send the message so we use smtp
             Transport transport = session.getTransport("smtp");
-            //send emailSetting
+            //send email
             Task.builder().async().execute(() -> {
                 try {
                     //connect to host and send message
@@ -147,7 +147,7 @@ public class AccountManager extends SpongeManager {
                     sendKey(player, "sendMailFailed");
                 }
             }).submit(plugin);
-            //set new password here if the emailSetting sending fails fails we have still the old password
+            //set new password here if the email sending fails fails we have still the old password
             account.setPasswordHash(hasher.hash(password));
             Task.builder().async().execute(() -> database.save(account)).submit(plugin);
         } catch (Throwable e) {

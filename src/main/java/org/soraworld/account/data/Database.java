@@ -23,7 +23,7 @@ public class Database {
     public static final String USERS_TABLE = "accounts";
 
     //this cache is thread-safe
-    private final ConcurrentHashMap<String, Account> cache = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<UUID, Account> cache = new ConcurrentHashMap<>();
 
     private final String jdbcUrl;
     private final String username;
@@ -85,7 +85,7 @@ public class Database {
     }
 
     public Account getAccountIfPresent(Player player) {
-        return cache.get(player.getUniqueId().toString());
+        return cache.get(player.getUniqueId());
     }
 
     public boolean isOnline(Player player) {
@@ -103,7 +103,7 @@ public class Database {
         }
     }
 
-    public boolean deleteAccount(String identity) {
+    public Account deleteAccount(String identity) {
         Connection conn = null;
         try {
             conn = getConnection();
@@ -129,7 +129,7 @@ public class Database {
         return false;
     }
 
-    public boolean deleteAccount(UUID uuid) {
+    public Account deleteAccount(UUID uuid) {
         Connection conn = null;
         try {
             conn = getConnection();
@@ -234,7 +234,7 @@ public class Database {
         try {
             conn = getConnection();
             PreparedStatement prepareStatement = conn.prepareStatement("INSERT INTO " + USERS_TABLE
-                    + " (`uuid`, `username`, `password`, `ip`, `emailSetting`, `lastLogin`) VALUES (?,?,?,?,?,?)");
+                    + " (`uuid`, `username`, `password`, `ip`, `email`, `lastLogin`) VALUES (?,?,?,?,?,?)");
 
             prepareStatement.setString(1, account.uuid());
             prepareStatement.setString(2, account.username());
@@ -314,7 +314,7 @@ public class Database {
             conn = getConnection();
 
             PreparedStatement statement = conn.prepareStatement("UPDATE " + USERS_TABLE
-                    + " SET `username`=?, `password`=?, `ip`=?, `lastLogin`=?, `emailSetting`=? WHERE `uuid`=?");
+                    + " SET `username`=?, `password`=?, `ip`=?, `lastLogin`=?, `email`=? WHERE `uuid`=?");
             //username is now changeable by Mojang - so keep it up to date
             statement.setString(1, account.username());
             statement.setString(2, account.getPassword());
