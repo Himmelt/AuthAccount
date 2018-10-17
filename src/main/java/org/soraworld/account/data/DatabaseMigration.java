@@ -44,7 +44,7 @@ public class DatabaseMigration {
                             + "`password` varchar(64) NOT NULL DEFAULT '' , "
                             + "`ip` varchar(32) NOT NULL DEFAULT '' , "
                             + "`lastlogin` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP  , "
-                            + "`email` VARCHAR(64) DEFAULT NULL , "
+                            + "`emailSetting` VARCHAR(64) DEFAULT NULL , "
                             + "`online` BOOLEAN DEFAULT 0, "
                             + "UNIQUE (`uuid`) "
                             + ')');
@@ -58,7 +58,7 @@ public class DatabaseMigration {
                             + "`password` varchar(64) NOT NULL DEFAULT '' , "
                             + "`ip` varchar(32) NOT NULL DEFAULT '' , "
                             + "`lastlogin` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP , "
-                            + "`email` VARCHAR(64) DEFAULT NULL , "
+                            + "`emailSetting` VARCHAR(64) DEFAULT NULL , "
                             + "`online` BOOLEAN DEFAULT 0, "
                             + "PRIMARY KEY (`userid`) , UNIQUE (`uuid`) "
                             + ')');

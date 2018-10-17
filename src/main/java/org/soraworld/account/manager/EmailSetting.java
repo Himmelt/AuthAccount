@@ -7,7 +7,7 @@ import org.soraworld.hocon.node.Serializable;
 @Serializable
 public class EmailSetting {
 
-    @Setting(comment = "Is password recovery using an email allowed")
+    @Setting(comment = "Is password recovery using an emailSetting allowed")
     private boolean enabled = false;
 
     @Setting(comment = "Mail server")
@@ -16,13 +16,13 @@ public class EmailSetting {
     @Setting(comment = "SMTP Port for outgoing messages")
     private int port = 465;
 
-    @Setting(comment = "Username for the account you want to the email from")
+    @Setting(comment = "Username for the account you want to the emailSetting from")
     private String account = "";
 
-    @Setting(comment = "Password for the account you want to the email from")
+    @Setting(comment = "Password for the account you want to the emailSetting from")
     private String password = "";
 
-    @Setting(comment = "Displays as sender in the email client")
+    @Setting(comment = "Displays as sender in the emailSetting client")
     private String senderName = "Your minecraft server name";
 
     @Setting(comment = "Email subject/title")

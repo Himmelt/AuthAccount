@@ -234,7 +234,7 @@ public class Database {
         try {
             conn = getConnection();
             PreparedStatement prepareStatement = conn.prepareStatement("INSERT INTO " + USERS_TABLE
-                    + " (`uuid`, `username`, `password`, `ip`, `email`, `lastLogin`) VALUES (?,?,?,?,?,?)");
+                    + " (`uuid`, `username`, `password`, `ip`, `emailSetting`, `lastLogin`) VALUES (?,?,?,?,?,?)");
 
             prepareStatement.setString(1, account.uuid());
             prepareStatement.setString(2, account.username());
@@ -314,7 +314,7 @@ public class Database {
             conn = getConnection();
 
             PreparedStatement statement = conn.prepareStatement("UPDATE " + USERS_TABLE
-                    + " SET `username`=?, `password`=?, `ip`=?, `lastLogin`=?, `email`=? WHERE `uuid`=?");
+                    + " SET `username`=?, `password`=?, `ip`=?, `lastLogin`=?, `emailSetting`=? WHERE `uuid`=?");
             //username is now changeable by Mojang - so keep it up to date
             statement.setString(1, account.username());
             statement.setString(2, account.getPassword());

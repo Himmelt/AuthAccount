@@ -26,11 +26,11 @@ public class SetEmailCommand implements CommandExecutor {
         }
 
         if (plugin.loader().config().isPlayerPermissions()
-                && !src.hasPermission(plugin.plugin().getId() + ".command.email")) {
+                && !src.hasPermission(plugin.plugin().getId() + ".command.emailSetting")) {
             throw new CommandPermissionException();
         }
 
-        String email = args.<String>getOne("email").get();
+        String email = args.<String>getOne("emailSetting").get();
         if (email.matches(EMAIL_REGEX)) {
             Account account = plugin.getDatabase().getAccountIfPresent((Player) src);
             if (account != null) {

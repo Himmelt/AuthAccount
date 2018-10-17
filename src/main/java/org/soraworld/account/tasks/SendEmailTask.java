@@ -9,7 +9,6 @@ import javax.mail.internet.MimeMessage;
 
 public class SendEmailTask implements Runnable {
 
-    private final AuthAccount plugin = AuthAccount.getInstance();
     private final Transport transport;
     private final MimeMessage email;
 
@@ -21,21 +20,7 @@ public class SendEmailTask implements Runnable {
         this.player = player;
     }
 
-    @Override
     public void run() {
-        try {
-            EmailSetting emailConfig = plugin.loader().config().getEmailConfiguration();
 
-            //connect to host and send message
-            if (!transport.isConnected()) {
-                transport.connect(emailConfig.getHost(), emailConfig.getAccount(), emailConfig.getPassword());
-            }
-
-            transport.sendMessage(email, email.getAllRecipients());
-            player.sendMessage(plugin.loader().getTextConfig().getMailSent());
-        } catch (Exception ex) {
-            plugin.getLogger().error("Error sending email", ex);
-            player.sendMessage(plugin.loader().getTextConfig().getErrorCommandMessage());
-        }
     }
 }

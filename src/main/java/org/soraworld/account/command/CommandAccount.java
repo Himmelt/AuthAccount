@@ -1,9 +1,12 @@
 package org.soraworld.account.command;
 
+import org.soraworld.account.data.Account;
+import org.soraworld.account.manager.AccountManager;
 import org.soraworld.violet.command.Args;
 import org.soraworld.violet.command.SpongeCommand;
 import org.soraworld.violet.command.Sub;
 import org.spongepowered.api.command.CommandSource;
+import org.spongepowered.api.entity.living.player.Player;
 
 public final class CommandAccount {
     @Sub(onlyPlayer = true, aliases = {"reg"}, usage = "/account reg <password> <password>")
@@ -31,13 +34,23 @@ public final class CommandAccount {
 
     }
 
-    @Sub(onlyPlayer = true, aliases = {"mail"}, usage = "/account email [mail-address]")
+    @Sub(onlyPlayer = true, aliases = {"mail"}, usage = "/account emailSetting [mail-address]")
     public static void email(SpongeCommand self, CommandSource sender, Args args) {
 
     }
 
-    @Sub(onlyPlayer = true, aliases = {"forgotpswd"}, usage = "/account email [mail-address]")
+    @Sub(onlyPlayer = true, aliases = {"forgotpswd"}, usage = "/account forgotpassword")
     public static void forgotpassword(SpongeCommand self, CommandSource sender, Args args) {
-
+        Player player = (Player) sender;
+        AccountManager manager = (AccountManager) self.manager;
+        Account account = manager.getDatabase().getAccountIfPresent(player);
+        if (account != null) {
+            if (!account.isOnline()) {
+                String email = account.getEmail();
+                if (email != null && !email.isEmpty()) {
+                    manager.sendResetEmail(account, player);
+                } else manager.sendKey(player, "UncommittedEmailAddressMessage");
+            } else manager.sendKey(player, "AlreadyLoggedInMessage");
+        } else manager.sendKey(player, "AccountNotLoadedMessage");
     }
 }

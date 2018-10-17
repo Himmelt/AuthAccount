@@ -1,6 +1,6 @@
 package org.soraworld.account.data;
 
-import org.soraworld.account.AuthAccount;
+import org.soraworld.account.manager.AccountManager;
 import org.soraworld.account.util.IPUtil;
 import org.spongepowered.api.entity.living.player.Player;
 
@@ -49,8 +49,8 @@ public class Account {
         this.email = resultSet.getString(7);
     }
 
-    public boolean checkPassword(AuthAccount plugin, String userInput) throws Exception {
-        return plugin.getHasher().checkPassword(passwordHash, userInput);
+    public boolean checkPassword(AccountManager manager, String userInput) throws Exception {
+        return AccountManager.hasher.checkPassword(passwordHash, userInput);
     }
 
     public String uuid() {

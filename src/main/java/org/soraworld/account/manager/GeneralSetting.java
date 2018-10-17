@@ -9,6 +9,7 @@ import java.util.Arrays;
 import java.util.List;
 
 @Serializable
+public
 class GeneralSetting {
 
     @Setting(comment = "Algorithms for hashing user passwords. You can also choose totp")

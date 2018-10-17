@@ -2,8 +2,7 @@ package org.soraworld.account;
 
 import org.soraworld.account.command.CommandAccount;
 import org.soraworld.account.command.CommandLogin;
-import org.soraworld.account.listener.ConnectionListener;
-import org.soraworld.account.listener.PreventListener;
+import org.soraworld.account.listener.EventListener;
 import org.soraworld.account.manager.AccountManager;
 import org.soraworld.violet.command.SpongeBaseSubs;
 import org.soraworld.violet.command.SpongeCommand;
@@ -12,7 +11,7 @@ import org.soraworld.violet.plugin.SpongePlugin;
 import org.spongepowered.api.plugin.Plugin;
 
 import java.nio.file.Path;
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 @Plugin(
@@ -31,10 +30,7 @@ public class AuthAccount extends SpongePlugin {
     }
 
     protected List<Object> registerListeners() {
-        List<Object> list = new ArrayList<>();
-        list.add(new ConnectionListener(manager));
-        list.add(new PreventListener());
-        return list;
+        return Collections.singletonList(new EventListener());
     }
 
     protected void registerCommands() {
