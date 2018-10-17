@@ -2,21 +2,52 @@ package org.soraworld.account.command;
 
 import org.soraworld.account.data.Account;
 import org.soraworld.account.manager.AccountManager;
+import org.soraworld.account.tasks.RegisterTask;
 import org.soraworld.violet.command.Args;
 import org.soraworld.violet.command.SpongeCommand;
 import org.soraworld.violet.command.Sub;
 import org.spongepowered.api.Sponge;
 import org.spongepowered.api.command.CommandSource;
 import org.spongepowered.api.entity.living.player.Player;
+import org.spongepowered.api.scheduler.Task;
+
+import java.util.regex.Pattern;
 
 public final class CommandAccount {
+
+    private static final Pattern E_MAIL = Pattern.compile("[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\\.[a-zA-Z0-9-.]+");
+
     @Sub(onlyPlayer = true, aliases = {"reg"}, usage = "/account reg <password> <password>")
     public static void register(SpongeCommand self, CommandSource sender, Args args) {
-        // TODO admin
+        AccountManager manager = (AccountManager) self.manager;
+        Player player = (Player) sender;
+        if (args.size() == 2) {
+            String password = args.get(1);
+            // TODO check password
+            if (!password.isEmpty() && password.equals(args.get(2))) {
+                //Check if the first two passwords are equal to prevent typos
+                Sponge.getScheduler().createTaskBuilder()
+                        //we are executing a SQL Query which is blocking
+                        .async()
+                        .execute(new RegisterTask(manager, player, password))
+                        .name("Register Query")
+                        .submit(manager.getPlugin());
+            } else manager.sendKey(player, "UnequalPasswordsMessage");
+        } else manager.sendKey(player, "regUsage");
     }
 
-    @Sub(perm = "admin", aliases = {"unreg"}, usage = "/account unreg <account>")
+    @Sub(aliases = {"unreg"}, usage = "/account unregister <password>")
     public static void unregister(SpongeCommand self, CommandSource sender, Args args) {
+
+    }
+
+    @Sub(path = "admin.register", perm = "admin", aliases = {"reg"}, usage = "/account admin reg <account> <password>")
+    public static void admin_register(SpongeCommand self, CommandSource sender, Args args) {
+
+    }
+
+    @Sub(path = "admin.unregister", perm = "admin", aliases = {"unreg"}, usage = "/account admin unreg <account> [confirm]")
+    public static void admin_unregister(SpongeCommand self, CommandSource sender, Args args) {
 
     }
 
@@ -67,7 +98,18 @@ public final class CommandAccount {
 
     @Sub(onlyPlayer = true, aliases = {"mail"}, usage = "/account emailSetting [mail-address]")
     public static void email(SpongeCommand self, CommandSource sender, Args args) {
+        Player player = (Player) sender;
+        AccountManager manager = (AccountManager) self.manager;
+        Account account = manager.getDatabase().getAccountIfPresent(player);
 
+        if (args.notEmpty()) {
+            String mail = args.first();
+            if (E_MAIL.matcher(mail).matches()) {
+                account.setEmail(mail);
+                manager.sendKey(player, "setEmail", mail);
+                Task.builder().async().execute(() -> manager.database.save(account)).submit(manager.getPlugin());
+            } else manager.sendKey(player, "invalidEmail");
+        } else manager.sendKey(player, "getEmail", account.getEmail());
     }
 
     @Sub(onlyPlayer = true, aliases = {"forgotpswd"}, usage = "/account forgotpassword")

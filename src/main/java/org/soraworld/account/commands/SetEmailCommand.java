@@ -20,32 +20,7 @@ public class SetEmailCommand implements CommandExecutor {
 
     @Override
     public CommandResult execute(CommandSource src, CommandContext args) throws CommandException {
-        if (!(src instanceof Player)) {
-            src.sendMessage(plugin.loader().getTextConfig().getPlayersOnlyActionMessage());
-            return CommandResult.empty();
-        }
 
-        if (plugin.loader().config().isPlayerPermissions()
-                && !src.hasPermission(plugin.plugin().getId() + ".command.emailSetting")) {
-            throw new CommandPermissionException();
-        }
 
-        String email = args.<String>getOne("emailSetting").get();
-        if (email.matches(EMAIL_REGEX)) {
-            Account account = plugin.getDatabase().getAccountIfPresent((Player) src);
-            if (account != null) {
-                account.setEmail(email);
-                src.sendMessage(plugin.loader().getTextConfig().getEmailSetMessage());
-                Sponge.getScheduler().createTaskBuilder()
-                        .async()
-                        .execute(new SaveTask(account))
-                        .submit(plugin);
-            }
-
-            return CommandResult.success();
-        }
-
-        src.sendMessage(plugin.loader().getTextConfig().getNotEmailMessage());
-        return CommandResult.success();
     }
 }

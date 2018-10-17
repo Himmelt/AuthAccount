@@ -3,7 +3,6 @@ package org.soraworld.account.manager;
 import org.soraworld.account.data.Account;
 import org.soraworld.account.data.Database;
 import org.soraworld.account.hasher.BCryptHasher;
-import org.soraworld.account.tasks.SaveTask;
 import org.soraworld.account.util.Rand;
 import org.soraworld.hocon.node.Setting;
 import org.soraworld.violet.manager.SpongeManager;
@@ -134,28 +133,23 @@ public class AccountManager extends SpongeManager {
             //we only need to send the message so we use smtp
             Transport transport = session.getTransport("smtp");
             //send emailSetting
-            Task.builder()
-                    .async()
-                    .execute(() -> {
-                        try {
-                            //connect to host and send message
-                            if (!transport.isConnected()) {
-                                transport.connect(emailSetting.getHost(), emailSetting.getAccount(), emailSetting.getPassword());
-                            }
-                            transport.sendMessage(message, message.getAllRecipients());
-                            sendKey(player, "RecoveryEmailSent");
-                        } catch (Exception e) {
-                            if (debug) e.printStackTrace();
-                            consoleKey("sendMailException");
-                            sendKey(player, "sendMailFailed");
-                        }
-                    }).submit(getPlugin());
+            Task.builder().async().execute(() -> {
+                try {
+                    //connect to host and send message
+                    if (!transport.isConnected()) {
+                        transport.connect(emailSetting.getHost(), emailSetting.getAccount(), emailSetting.getPassword());
+                    }
+                    transport.sendMessage(message, message.getAllRecipients());
+                    sendKey(player, "RecoveryEmailSent");
+                } catch (Exception e) {
+                    if (debug) e.printStackTrace();
+                    consoleKey("sendMailException");
+                    sendKey(player, "sendMailFailed");
+                }
+            }).submit(plugin);
             //set new password here if the emailSetting sending fails fails we have still the old password
             account.setPasswordHash(hasher.hash(password));
-            Task.builder()
-                    .async()
-                    .execute(new SaveTask(account))
-                    .submit(plugin);
+            Task.builder().async().execute(() -> database.save(account)).submit(plugin);
         } catch (Throwable e) {
             if (debug) e.printStackTrace();
             consoleKey("sendMailException");
