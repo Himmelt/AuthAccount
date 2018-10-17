@@ -2,10 +2,10 @@ package org.soraworld.account.data;
 
 import com.google.common.primitives.Bytes;
 import com.google.common.primitives.Longs;
-import org.soraworld.account.constant.Constant;
 import org.soraworld.account.manager.AccountManager;
 import org.soraworld.account.manager.DatabaseSetting;
 import org.soraworld.violet.util.ChatColor;
+import org.spongepowered.api.Sponge;
 import org.spongepowered.api.entity.living.player.Player;
 import org.spongepowered.api.service.sql.SqlService;
 
@@ -32,55 +32,44 @@ public class Database {
     private SqlService sql;
 
     private final AccountManager manager;
-    private final Path path;
 
     public Database(AccountManager manager, Path path) {
         this.manager = manager;
-        this.path = path;
-        DatabaseSetting database = manager.databaseSetting;
 
-        if (database.isMySQL()) {
-            this.username = database.getUsername();
-            this.password = database.getPassword();
+        String pluginId = manager.getPlugin().getId();
+
+        DatabaseSetting dbCfg = manager.databaseSetting;
+
+        if (dbCfg.isMySQL()) {
+            this.username = dbCfg.getUsername();
+            this.password = dbCfg.getPassword();
         } else {
             this.username = "";
             this.password = "";
         }
 
-        String storagePath = database.getPath()
-                .replace("%DIR%", manager.path.normalize());
+        String storagePath = dbCfg.getPath().replace("%DIR%", path.normalize().toString());
 
-        StringBuilder urlBuilder = new StringBuilder("jdbc:")
-                .append(database.getType().name().toLowerCase()).append("://");
-        switch (database.getType()) {
-            case SQLITE:
-                urlBuilder.append(storagePath).append(File.separatorChar).append(Constant.MODID + ".db");
-                break;
-            case MYSQL:
-                //jdbc:<engine>://[<username>[:<password>]@]<host>/<database> - copied from sponge doc
-                urlBuilder.append(username).append(':').append(password).append('@')
-                        .append(database.getPath())
-                        .append(':')
-                        .append(database.getPort())
-                        .append('/')
-                        .append(database.getDatabase())
-                        .append("?useSSL").append('=').append(database.isUseSSL());
-                break;
-            case H2:
-            default:
-                urlBuilder.append(storagePath).append(File.separatorChar).append(Constant.MODID);
-                break;
+        StringBuilder sqlURL = new StringBuilder("jdbc:").append(dbCfg.type.toLowerCase()).append("://");
+        if (dbCfg.isMySQL()) {
+            //jdbc:<engine>://[<username>[:<password>]@]<host>/<database> - copied from sponge doc
+            sqlURL.append(username).append(':').append(password).append('@')
+                    .append(dbCfg.getPath())
+                    .append(':')
+                    .append(dbCfg.getPort())
+                    .append('/')
+                    .append(dbCfg.getDBName())
+                    .append("?useSSL").append('=').append(dbCfg.isUseSSL());
+        } else if (dbCfg.isSQLite()) {
+            sqlURL.append(storagePath).append(File.separatorChar).append(pluginId).append(".db");
+        } else {
+            sqlURL.append(storagePath).append(File.separatorChar).append(pluginId);
         }
-
-        this.jdbcUrl = urlBuilder.toString();
+        this.jdbcUrl = sqlURL.toString();
     }
 
     public Connection getConnection() throws SQLException {
-        if (sql == null) {
-            //lazy binding
-            sql = plugin.getGame().getServiceManager().provideUnchecked(SqlService.class);
-        }
-
+        if (sql == null) sql = Sponge.getServiceManager().provideUnchecked(SqlService.class);
         return sql.getDataSource(jdbcUrl).getConnection();
     }
 
@@ -161,7 +150,7 @@ public class Database {
     }
 
     public Account remove(Player player) {
-        return cache.remove(player.getUniqueId().toString());
+        return cache.remove(player.getUniqueId());
     }
 
     public Account loadAccount(UUID uuid) {
@@ -176,7 +165,7 @@ public class Database {
             ResultSet resultSet = prepareStatement.executeQuery();
             if (resultSet.next()) {
                 loadedAccount = new Account(resultSet);
-                cache.put(uuid.toString(), loadedAccount);
+                cache.put(uuid, loadedAccount);
             }
         } catch (SQLException sqlEx) {
             plugin.getLogger().error("Error loading account", sqlEx);
@@ -236,7 +225,7 @@ public class Database {
             PreparedStatement prepareStatement = conn.prepareStatement("INSERT INTO " + USERS_TABLE
                     + " (`uuid`, `username`, `password`, `ip`, `email`, `lastLogin`) VALUES (?,?,?,?,?,?)");
 
-            prepareStatement.setString(1, account.uuid());
+            prepareStatement.setString(1, account.uuid().toString());
             prepareStatement.setString(2, account.username());
             prepareStatement.setString(3, account.getPassword());
 
@@ -281,7 +270,7 @@ public class Database {
                     + " SET `online`=? WHERE `uuid`=?");
 
             prepareStatement.setInt(1, online ? 1 : 0);
-            prepareStatement.setString(2, account.uuid());
+            prepareStatement.setString(2, account.uuid().toString());
 
             prepareStatement.execute();
         } catch (SQLException ex) {
@@ -322,7 +311,7 @@ public class Database {
 
             statement.setTimestamp(4, account.getTimestamp());
             statement.setString(5, account.getEmail());
-            statement.setString(6, account.uuid());
+            statement.setString(6, account.uuid().toString());
 
             statement.execute();
             cache.put(account.uuid(), account);

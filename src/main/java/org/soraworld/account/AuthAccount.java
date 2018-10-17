@@ -2,12 +2,15 @@ package org.soraworld.account;
 
 import org.soraworld.account.command.CommandAccount;
 import org.soraworld.account.command.CommandLogin;
+import org.soraworld.account.data.Account;
 import org.soraworld.account.listener.EventListener;
 import org.soraworld.account.manager.AccountManager;
 import org.soraworld.violet.command.SpongeBaseSubs;
 import org.soraworld.violet.command.SpongeCommand;
 import org.soraworld.violet.manager.SpongeManager;
 import org.soraworld.violet.plugin.SpongePlugin;
+import org.spongepowered.api.data.DataRegistration;
+import org.spongepowered.api.event.game.state.GameInitializationEvent;
 import org.spongepowered.api.plugin.Plugin;
 
 import java.nio.file.Path;
@@ -24,6 +27,17 @@ public class AuthAccount extends SpongePlugin {
     public static final String PLUGIN_ID = "authaccount";
     public static final String PLUGIN_NAME = "AuthAccount";
     public static final String PLUGIN_VERSION = "1.0.0";
+
+    public void onInit(GameInitializationEvent event) {
+        super.onInit(event);
+        DataRegistration.builder()
+                .dataClass(Account.class)
+                .immutableClass(Account.Immutable.class)
+                .builder(new Account.Builder())
+                .dataName("Account Data")
+                .manipulatorId("account")
+                .buildAndRegister(container);
+    }
 
     protected SpongeManager registerManager(Path path) {
         return new AccountManager(this, path);

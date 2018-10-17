@@ -7,7 +7,7 @@ import org.soraworld.hocon.node.Setting;
 public class DatabaseSetting {
 
     @Setting(comment = "SQL server type. You can choose between h2, SQLite and MySQL")
-    private String type = "h2";
+    public String type = "h2";
 
     @Setting(comment = "Path where the database is located. This can be a file path (h2/SQLite) or an IP/Domain(MySQL)")
     private String path = "%DIR%";
@@ -36,7 +36,7 @@ public class DatabaseSetting {
         return port;
     }
 
-    public String getDatabase() {
+    public String getDBName() {
         return database;
     }
 
@@ -53,6 +53,12 @@ public class DatabaseSetting {
     }
 
     public boolean isMySQL() {
-        return "MYSQL".equalsIgnoreCase(type);
+        return "MySQL".equalsIgnoreCase(type);
+    }
+    public boolean isH2() {
+        return "H2".equalsIgnoreCase(type);
+    }
+    public boolean isSQLite() {
+        return "SQLite".equalsIgnoreCase(type);
     }
 }

@@ -46,7 +46,7 @@ public class AccountManager extends SpongeManager {
     }
 
     public ChatColor defChatColor() {
-        return ChatColor.AQUA;
+        return ChatColor.GOLD;
     }
 
     public void beforeLoad() {
@@ -73,6 +73,10 @@ public class AccountManager extends SpongeManager {
     }
 
     public void logout(Player player) {
+        player.getOrCreate(Account.class).ifPresent(account -> {
+            account.setOnline(false);
+            player.offer(account);
+        });
         Account account = database.remove(player);
 
         protectionManager.unprotect(player);
