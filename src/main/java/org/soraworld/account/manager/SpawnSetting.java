@@ -15,13 +15,12 @@ class SpawnSetting {
     @Setting(comment = "Should the plugin use the default spawn from the world you specify below")
     public boolean defaultSpawn;
     @Setting(comment = "Spawn world or let it empty to use the default world specified in the server properties")
-    public String worldName = Sponge.getServer().getDefaultWorldName();
+    public String worldName = "";
     @Setting
     public int coordX, coordY, coordZ;
 
     public Location<World> getSpawnLocation() {
         if (worldName.isEmpty()) worldName = Sponge.getServer().getDefaultWorldName();
-
         Optional<World> optionalWorld = Sponge.getServer().getWorld(worldName);
         if (optionalWorld.isPresent()) {
             World world = optionalWorld.get();

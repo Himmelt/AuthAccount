@@ -34,15 +34,25 @@ repositories {
         url = 'https://www.lss233.com/artifactory/minecraft'
     }
 }
+configurations {
+    shade
+    compile.extendsFrom(shade)
+}
 
 dependencies {
     compile 'org.soraworld:violet-sponge:2.3.6'
     compile 'org.spongepowered:spongeapi:7.1.0-SNAPSHOT'
-    compile 'org.mindrot:jbcrypt:0.4'
-    compile 'javax.mail:javax.mail-api:1.6.2'
+    shade 'org.mindrot:jbcrypt:0.4'
+    shade 'javax.mail:javax.mail-api:1.6.2'
     //compile 'com.sun.mail:javax.mail:1.6.0'
 }
 
 tasks.withType(JavaCompile) {
     options.encoding = "UTF-8"
+}
+
+jar {
+    configurations.shade.copyRecursive().setTransitive(false).each {
+        artifact -> from(zipTree(artifact))
+    }
 }
