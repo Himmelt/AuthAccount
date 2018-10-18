@@ -196,10 +196,6 @@ public class Database {
         return null;
     }
 
-    public Account loadAccount(Player player) {
-        return loadAccount(player.getUniqueId());
-    }
-
     public Account remove(Player player) {
         return cache.remove(player.getUniqueId());
     }

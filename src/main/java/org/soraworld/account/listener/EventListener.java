@@ -47,7 +47,7 @@ public class EventListener {
                         user.getOrCreate(Account.class).ifPresent(data -> {
                             if (data.uid >= 0) {
                                 Task.builder().async().name("SyncSQLData").execute(() -> {
-                                    Account acc = manager.database.loadAccount(uuid);
+                                    Account acc = manager.loadAccount(uuid);
                                     if (uuid.equals(acc.uuid())) {
                                         data.copy(acc);
                                         // TODO check sync main thread ???

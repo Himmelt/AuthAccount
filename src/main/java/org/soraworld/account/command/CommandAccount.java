@@ -57,14 +57,14 @@ public final class CommandAccount {
     public static void email(SpongeCommand self, CommandSource sender, Args args) {
         Player player = (Player) sender;
         AccountManager manager = (AccountManager) self.manager;
-        Account account = manager.database.getAccountIfPresent(player);
+        Account account = manager.getAccountIfPresent(player);
 
         if (args.notEmpty()) {
             String mail = args.first();
             if (E_MAIL.matcher(mail).matches()) {
                 account.setEmail(mail);
                 manager.sendKey(player, "setEmail", mail);
-                Task.builder().async().execute(() -> manager.database.save(account)).submit(manager.getPlugin());
+                Task.builder().async().execute(() -> manager.saveAccount(account)).submit(manager.getPlugin());
             } else manager.sendKey(player, "invalidEmail");
         } else manager.sendKey(player, "getEmail", account.getEmail());
     }
@@ -73,7 +73,7 @@ public final class CommandAccount {
     public static void changepassword(SpongeCommand self, CommandSource sender, Args args) {
         Player player = (Player) sender;
         AccountManager manager = (AccountManager) self.manager;
-        Account account = manager.database.getAccountIfPresent(player);
+        Account account = manager.getAccountIfPresent(player);
 
         if (account != null && account.isOnline()) {
             if (args.size() == 3) {
@@ -89,7 +89,7 @@ public final class CommandAccount {
                                     .name("Register Query")
                                     .execute(() -> {
                                         account.setPassword(password);
-                                        if (manager.database.save(account)) {
+                                        if (manager.saveAccount(account)) {
                                             manager.sendKey(player, "ChangePasswordMessage");
                                         } else manager.sendKey(player, "ErrorCommandMessage");
                                     }).submit(manager.getPlugin());
@@ -107,7 +107,7 @@ public final class CommandAccount {
     public static void forgotpassword(SpongeCommand self, CommandSource sender, Args args) {
         Player player = (Player) sender;
         AccountManager manager = (AccountManager) self.manager;
-        Account account = manager.database.getAccountIfPresent(player);
+        Account account = manager.getAccountIfPresent(player);
         if (account != null) {
             if (!account.isOnline()) {
                 String email = account.getEmail();
@@ -162,14 +162,14 @@ public final class CommandAccount {
                 UUID uuid = UUID.fromString(text);
                 // TODO confirm
                 Task.builder().async().execute(() -> {
-                    Account acc = manager.database.deleteAccount(uuid);
+                    Account acc = manager.deleteAccount(uuid);
                     if (acc != null) manager.sendKey(sender, "AccountDeleted", acc.username(), acc.uuid());
                     else manager.sendKey(sender, "AccountNotFound");
                 }).submit(manager.getPlugin());
             } catch (Throwable e) {
                 // TODO confirm
                 Task.builder().async().execute(() -> {
-                    Account acc = manager.database.deleteAccount(text);
+                    Account acc = manager.deleteAccount(text);
                     if (acc != null) manager.sendKey(sender, "AccountDeleted", acc.username(), acc.uuid());
                     else manager.sendKey(sender, "AccountNotFound");
                 }).submit(manager.getPlugin());
@@ -188,7 +188,7 @@ public final class CommandAccount {
                 //check if the account is an UUID
                 Optional<Player> player = Sponge.getServer().getPlayer(uuid);
                 if (player.isPresent()) {
-                    Account account = manager.database.getAccountIfPresent(player.get());
+                    Account account = manager.getAccountIfPresent(player.get());
                     if (account == null) {
                         manager.sendKey(sender, "AccountNotFound");
                     } else {
@@ -206,7 +206,7 @@ public final class CommandAccount {
             } catch (Throwable e) {
                 Optional<Player> player = Sponge.getServer().getPlayer(text);
                 if (player.isPresent()) {
-                    Account account = manager.database.getAccountIfPresent(player.get());
+                    Account account = manager.getAccountIfPresent(player.get());
                     if (account == null) {
                         manager.sendKey(sender, "AccountNotFound");
                     } else {

@@ -28,7 +28,7 @@ public class AccountManager extends SpongeManager {
     @Setting(comment = "comment.spawn")
     public final SpawnSetting spawn;
     @Setting(path = "database", comment = "comment.database")
-    public final Database database;
+    private final Database database;
     @Setting(comment = "comment.email")
     public final EmailSetting emailSetting;
 
@@ -59,7 +59,7 @@ public class AccountManager extends SpongeManager {
         database.createTable();
         Sponge.getServer().getOnlinePlayers().forEach(player -> {
             protect(player);
-            database.loadAccount(player);
+            database.loadAccount(player.getUniqueId());
         });
     }
 
@@ -216,5 +216,41 @@ public class AccountManager extends SpongeManager {
         } else {
             player.setLocation(oldLocation);
         }
+    }
+
+    public Account getAccountIfPresent(Player player) {
+        return database.getAccountIfPresent(player);
+    }
+
+    public boolean saveAccount(Account account) {
+        return database.save(account);
+    }
+
+    public Account loadAccount(UUID uuid) {
+        return database.loadAccount(uuid);
+    }
+
+    public Account loadAccount(String name) {
+        return database.loadAccount(name);
+    }
+
+    public void flushLoginStatus(Account account, boolean online) {
+        database.flushLoginStatus(account, online);
+    }
+
+    public int getRegistrationsCount(String ip) {
+        return database.getRegistrationsCount(ip);
+    }
+
+    public boolean createAccount(Account account, boolean cache) {
+        return database.createAccount(account, cache);
+    }
+
+    public Account deleteAccount(UUID uuid) {
+        return database.deleteAccount(uuid);
+    }
+
+    public Account deleteAccount(String name) {
+        return database.deleteAccount(name);
     }
 }
