@@ -39,7 +39,7 @@ public class RegisterTask implements Runnable {
                 }
 
                 Task.builder()
-                        .execute(() -> manager.protectionManager.unprotect(player))
+                        .execute(() -> manager.unprotect(player))
                         .submit(manager.getPlugin());
             } catch (Exception ex) {
                 if (manager.isDebug()) ex.printStackTrace();

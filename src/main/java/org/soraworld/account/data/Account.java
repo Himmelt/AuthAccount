@@ -71,8 +71,16 @@ public class Account implements DataManipulator<Account, Account.Immutable> {
 
     }
 
+    public Account(Immutable other) {
+
+    }
+
+    public Account() {
+
+    }
+
     public boolean checkPassword(AccountManager manager, String userInput) {
-        return AccountManager.hasher.checkPassword(passwordHash, userInput);
+        return AccountManager.hasher.checkPassword(password, userInput);
     }
 
     public UUID uuid() {
@@ -191,6 +199,10 @@ public class Account implements DataManipulator<Account, Account.Immutable> {
     }
 
     public static class Immutable implements ImmutableDataManipulator<Immutable, Account> {
+
+        public Immutable(Account account) {
+
+        }
 
         public Account asMutable() {
             return new Account(this);

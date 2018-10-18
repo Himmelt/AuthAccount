@@ -1,7 +1,7 @@
 package org.soraworld.account.data;
 
-import org.soraworld.account.AuthAccount;
-import org.soraworld.account.manager.SQLType;
+import org.soraworld.account.manager.AccountManager;
+import org.soraworld.violet.util.ChatColor;
 
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -11,16 +11,16 @@ public class DatabaseMigration {
 
     private static final String OLD_TABLE_NAME = "users";
 
-    private final AuthAccount plugin;
+    private final AccountManager manager;
 
-    public DatabaseMigration(AuthAccount plugin) {
-        this.plugin = plugin;
+    public DatabaseMigration(AccountManager manager) {
+        this.manager = manager;
     }
 
     public void createTable() throws SQLException {
         Connection conn = null;
         try {
-            conn = plugin.getDatabase().getConnection();
+            conn = manager.getDatabase().getConnection();
 
             boolean tableExists = false;
             try {
@@ -31,11 +31,11 @@ public class DatabaseMigration {
 
                 tableExists = true;
             } catch (SQLException sqlEx) {
-                plugin.getLogger().info("Table " + Database.USERS_TABLE + " doesn't exist,will create it!");
+                manager.console("Table " + Database.USERS_TABLE + " doesn't exist,will create it!");
             }
 
             if (!tableExists) {
-                if (plugin.loader().config().getSqlConfiguration().getType() == SQLType.SQLITE) {
+                if (manager.databaseSetting.isSQLite()) {
                     Statement statement = conn.createStatement();
                     statement.execute("CREATE TABLE " + Database.USERS_TABLE + " ( "
                             + "`userid` INTEGER PRIMARY KEY AUTOINCREMENT, "
@@ -66,14 +66,14 @@ public class DatabaseMigration {
                 }
             }
         } finally {
-            plugin.getDatabase().closeQuietly(conn);
+            manager.getDatabase().closeQuietly(conn);
         }
     }
 
     public void migrateName() {
         Connection conn = null;
         try {
-            conn = plugin.getDatabase().getConnection();
+            conn = manager.getDatabase().getConnection();
 
             boolean tableExists = false;
             try {
@@ -96,7 +96,7 @@ public class DatabaseMigration {
                 statement.execute("DROP TABLE " + OLD_TABLE_NAME);
             }
         } catch (SQLException ex) {
-            plugin.getLogger().error("Error migrating database", ex);
+            manager.console(ChatColor.RED + "Error migrating database");
         } finally {
             if (conn != null) {
                 try {

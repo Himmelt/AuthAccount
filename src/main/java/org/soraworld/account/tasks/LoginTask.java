@@ -46,7 +46,7 @@ public class LoginTask implements Runnable {
                 account.setIp(IPUtil.getPlayerIP(player));
                 manager.sendKey(player, "LoggedIn");
                 Sponge.getScheduler().createTaskBuilder()
-                        .execute(() -> manager.protectionManager.unprotect(player))
+                        .execute(() -> manager.unprotect(player))
                         .submit(manager);
 
                 //flushes the ip update

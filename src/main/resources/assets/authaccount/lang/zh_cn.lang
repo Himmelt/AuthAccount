@@ -44,3 +44,5 @@ totpNotEnabled = "&4Totp 没有开启,你必须输入两次密码以确认."
 uncommittedEmailAddress = "&4你还没有设置邮箱地址!"
 unevenPasswords = "&4两次密码输入不一致."
 unregisterFailed = "&4Your request is neither a player name or uuid."
+
+comment = "Another player with the same name tried to join the server while that player is still online"

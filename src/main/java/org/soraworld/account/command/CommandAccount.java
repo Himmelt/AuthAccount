@@ -135,7 +135,7 @@ public final class CommandAccount {
                 if (player.isPresent()) {
                     manager.sendKey(sender, "ForceRegisterOnlineMessage");
                 } else {
-                    Task.builder().async().execute(new ForceRegTask(sender, uuid, pswd)).submit(manager.getPlugin());
+                    Task.builder().async().execute(new ForceRegTask(manager, sender, uuid, pswd)).submit(manager.getPlugin());
                 }
             } catch (Throwable e) {
 
@@ -148,7 +148,7 @@ public final class CommandAccount {
                     // TODO
                     UUID offlineUUID = UUID.nameUUIDFromBytes(("OfflinePlayer:" + text).getBytes(Charsets.UTF_8));
 
-                    Task.builder().async().execute(new ForceRegTask(sender, offlineUUID, pswd)).submit(manager.getPlugin());
+                    Task.builder().async().execute(new ForceRegTask(manager, sender, offlineUUID, pswd)).submit(manager.getPlugin());
                 }
             }
         } else manager.sendKey(sender, "invalidArgs");
@@ -202,7 +202,7 @@ public final class CommandAccount {
                         }
                     }
                 } else {
-                    Task.builder().async().execute(new ResetPwTask(sender, uuid, pswd)).submit(manager.getPlugin());
+                    Task.builder().async().execute(new ResetPwTask(sender, uuid, pswd, manager)).submit(manager.getPlugin());
                 }
             } catch (Throwable e) {
                 Optional<Player> player = Sponge.getServer().getPlayer(text);
@@ -220,7 +220,7 @@ public final class CommandAccount {
                         }
                     }
                 } else {
-                    Task.builder().async().execute(new ResetPwTask(sender, text, pswd)).submit(manager.getPlugin());
+                    Task.builder().async().execute(new ResetPwTask(sender, text, pswd, manager)).submit(manager.getPlugin());
                 }
             }
         } else manager.sendKey(sender, "invalidArgs");

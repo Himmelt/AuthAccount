@@ -41,25 +41,25 @@ public class Database {
         DatabaseSetting dbCfg = manager.databaseSetting;
 
         if (dbCfg.isMySQL()) {
-            this.username = dbCfg.getUsername();
-            this.password = dbCfg.getPassword();
+            this.username = dbCfg.username;
+            this.password = dbCfg.password;
         } else {
             this.username = "";
             this.password = "";
         }
 
-        String storagePath = dbCfg.getPath().replace("%DIR%", path.normalize().toString());
+        String storagePath = dbCfg.path.replace("%DIR%", path.normalize().toString());
 
         StringBuilder sqlURL = new StringBuilder("jdbc:").append(dbCfg.type.toLowerCase()).append("://");
         if (dbCfg.isMySQL()) {
             //jdbc:<engine>://[<username>[:<password>]@]<host>/<database> - copied from sponge doc
             sqlURL.append(username).append(':').append(password).append('@')
-                    .append(dbCfg.getPath())
+                    .append(dbCfg.path)
                     .append(':')
-                    .append(dbCfg.getPort())
+                    .append(dbCfg.port)
                     .append('/')
                     .append(dbCfg.getDBName())
-                    .append("?useSSL").append('=').append(dbCfg.isUseSSL());
+                    .append("?useSSL").append('=').append(dbCfg.useSSL);
         } else if (dbCfg.isSQLite()) {
             sqlURL.append(storagePath).append(File.separatorChar).append(pluginId).append(".db");
         } else {
@@ -84,11 +84,11 @@ public class Database {
 
     public void createTable() {
         try {
-            DatabaseMigration migration = new DatabaseMigration(plugin);
+            DatabaseMigration migration = new DatabaseMigration(manager);
             migration.migrateName();
             migration.createTable();
         } catch (SQLException sqlEx) {
-            plugin.getLogger().error("Error creating database table", sqlEx);
+            manager.console(ChatColor.RED + "Error creating database table");
         }
     }
 
@@ -108,17 +108,18 @@ public class Database {
                     .forEach(cache::remove);
 
             //min one account was found
-            return affectedRows > 0;
+            return affectedRows > 0 ? null : null;
         } catch (SQLException ex) {
-            plugin.getLogger().error("Error deleting user account", ex);
+            manager.console("Error deleting user account");
         } finally {
             closeQuietly(conn);
         }
 
-        return false;
+        return null;
     }
 
     public Account deleteAccount(UUID uuid) {
+
         Connection conn = null;
         try {
             conn = getConnection();
@@ -135,14 +136,15 @@ public class Database {
             cache.remove(uuid);
 
             //min one account was found
-            return affectedRows > 0;
+            //TODO
+            return affectedRows > 0 ? null : null;
         } catch (SQLException sqlEx) {
-            plugin.getLogger().error("Error deleting user account", sqlEx);
+            manager.console("Error deleting user account");
         } finally {
             closeQuietly(conn);
         }
 
-        return false;
+        return null;
     }
 
     public Account loadAccount(Player player) {
@@ -168,7 +170,7 @@ public class Database {
                 cache.put(uuid, loadedAccount);
             }
         } catch (SQLException sqlEx) {
-            plugin.getLogger().error("Error loading account", sqlEx);
+            manager.console("Error loading account");
         } finally {
             closeQuietly(conn);
         }
@@ -189,7 +191,7 @@ public class Database {
                 return new Account(resultSet);
             }
         } catch (SQLException sqlEx) {
-            plugin.getLogger().error("Error loading account", sqlEx);
+            manager.console("Error loading account");
         } finally {
             closeQuietly(conn);
         }
@@ -210,7 +212,7 @@ public class Database {
                 return resultSet.getInt(1);
             }
         } catch (SQLException sqlEx) {
-            plugin.getLogger().error("Error loading count of registrations", sqlEx);
+            manager.console("Error loading count of registrations");
         } finally {
             closeQuietly(conn);
         }
@@ -242,7 +244,7 @@ public class Database {
 
             return true;
         } catch (SQLException sqlEx) {
-            plugin.getLogger().error("Error registering account", sqlEx);
+            manager.console("Error registering account");
         } finally {
             closeQuietly(conn);
         }
@@ -274,7 +276,7 @@ public class Database {
 
             prepareStatement.execute();
         } catch (SQLException ex) {
-            plugin.getLogger().error("Error updating login status", ex);
+            manager.console("Error updating login status");
         } finally {
             closeQuietly(conn);
         }
@@ -317,7 +319,7 @@ public class Database {
             cache.put(account.uuid(), account);
             return true;
         } catch (SQLException ex) {
-            plugin.getLogger().error("Error updating user account", ex);
+            manager.console("Error updating user account");
             return false;
         } finally {
             closeQuietly(conn);

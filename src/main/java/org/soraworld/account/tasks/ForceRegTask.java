@@ -1,42 +1,40 @@
 package org.soraworld.account.tasks;
 
 import org.soraworld.account.data.Account;
-import org.soraworld.account.AuthAccount;
+import org.soraworld.account.manager.AccountManager;
 import org.spongepowered.api.command.CommandSource;
 
 import java.util.UUID;
 
 public class ForceRegTask implements Runnable {
 
-    private final AuthAccount plugin = AuthAccount.getInstance();
+    private final AccountManager manager;
 
-    private final CommandSource src;
+    private final CommandSource sender;
     private final UUID accountIndentifer;
     private final String password;
 
-    public ForceRegTask(CommandSource src, UUID uuid, String password) {
-        this.src = src;
+    public ForceRegTask(AccountManager manager, CommandSource sender, UUID uuid, String password) {
+        this.manager = manager;
+        this.sender = sender;
         this.accountIndentifer = uuid;
         this.password = password;
     }
 
-    @Override
     public void run() {
-        Account account = plugin.getDatabase().loadAccount(accountIndentifer);
+        Account account = manager.getDatabase().loadAccount(accountIndentifer);
 
         if (account == null) {
             try {
-                String hash = plugin.getHasher().hash(password);
+                String hash = AccountManager.hasher.hash(password);
                 account = new Account(accountIndentifer, "", hash, "invalid");
-                plugin.getDatabase().createAccount(account, false);
-
-                src.sendMessage(plugin.loader().getTextConfig().getForceRegisterSuccessMessage());
+                manager.getDatabase().createAccount(account, false);
+                manager.sendKey(sender, "ForceRegisterSuccessMessage");
             } catch (Exception ex) {
-                plugin.getLogger().error("Error creating hash", ex);
-                src.sendMessage(plugin.loader().getTextConfig().getErrorCommandMessage());
+                manager.console("Error creating hash");
             }
         } else {
-            src.sendMessage(plugin.loader().getTextConfig().getAccountAlreadyExists());
+            manager.sendKey(sender, "AccountAlreadyExists");
         }
     }
 }

@@ -5,6 +5,7 @@ import org.soraworld.account.command.CommandLogin;
 import org.soraworld.account.data.Account;
 import org.soraworld.account.listener.EventListener;
 import org.soraworld.account.manager.AccountManager;
+import org.soraworld.violet.Violet;
 import org.soraworld.violet.command.SpongeBaseSubs;
 import org.soraworld.violet.command.SpongeCommand;
 import org.soraworld.violet.manager.SpongeManager;
@@ -12,6 +13,7 @@ import org.soraworld.violet.plugin.SpongePlugin;
 import org.spongepowered.api.Sponge;
 import org.spongepowered.api.data.DataRegistration;
 import org.spongepowered.api.event.game.state.GameInitializationEvent;
+import org.spongepowered.api.plugin.Dependency;
 import org.spongepowered.api.plugin.Plugin;
 import org.spongepowered.api.service.user.UserStorageService;
 
@@ -22,7 +24,14 @@ import java.util.List;
 @Plugin(
         id = AuthAccount.PLUGIN_ID,
         name = AuthAccount.PLUGIN_NAME,
-        version = AuthAccount.PLUGIN_VERSION
+        version = AuthAccount.PLUGIN_VERSION,
+        description = "AuthAccount Plugin for sponge.",
+        dependencies = {
+                @Dependency(
+                        id = Violet.PLUGIN_ID,
+                        version = Violet.PLUGIN_VERSION
+                )
+        }
 )
 public class AuthAccount extends SpongePlugin {
 
