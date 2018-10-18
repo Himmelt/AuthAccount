@@ -2,7 +2,6 @@ package org.soraworld.account.manager;
 
 import org.soraworld.account.data.Account;
 import org.soraworld.account.data.Database;
-import org.soraworld.account.hasher.BCryptHasher;
 import org.soraworld.account.util.Rand;
 import org.soraworld.hocon.node.Setting;
 import org.soraworld.violet.manager.SpongeManager;
@@ -35,7 +34,6 @@ public class AccountManager extends SpongeManager {
     public EmailSetting emailSetting = new EmailSetting();
 
     public final Database database;
-    public static final BCryptHasher hasher = new BCryptHasher();
 
     private final HashMap<UUID, Location<World>> oldLocations = new HashMap<>();
 
@@ -155,7 +153,7 @@ public class AccountManager extends SpongeManager {
                 }
             }).submit(plugin);
             //set new password here if the email sending fails fails we have still the old password
-            account.setPasswordHash(hasher.hash(password));
+            account.setPassword(password);
             Task.builder().async().execute(() -> database.save(account)).submit(plugin);
         } catch (Throwable e) {
             if (debug) e.printStackTrace();

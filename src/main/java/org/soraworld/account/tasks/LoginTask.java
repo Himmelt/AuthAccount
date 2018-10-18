@@ -39,7 +39,7 @@ public class LoginTask implements Runnable {
                 return;
             }
 
-            if (account.checkPassword(manager, userInput)) {
+            if (account.checkPassword(userInput)) {
                 manager.getAttempts().remove(player.getName());
                 account.setOnline(true);
                 //update the ip

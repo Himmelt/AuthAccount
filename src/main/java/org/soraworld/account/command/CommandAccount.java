@@ -77,19 +77,18 @@ public final class CommandAccount {
 
         if (account != null && account.isOnline()) {
             if (args.size() == 3) {
-                if (account.checkPassword(manager, args.first())) {
+                if (account.checkPassword(args.first())) {
                     // TODO password format check
                     String password = args.get(1);
                     if (!password.isEmpty() && password.equals(args.get(2))) {
                         try {
                             //Check if the first two passwords are equal to prevent typos
-                            String hash = AccountManager.hasher.hash(password);
                             Sponge.getScheduler().createTaskBuilder()
                                     //we are executing a SQL Query which is blocking
                                     .async()
                                     .name("Register Query")
                                     .execute(() -> {
-                                        account.setPasswordHash(hash);
+                                        account.setPassword(password);
                                         if (manager.getDatabase().save(account)) {
                                             manager.sendKey(player, "ChangePasswordMessage");
                                         } else manager.sendKey(player, "ErrorCommandMessage");
@@ -194,7 +193,7 @@ public final class CommandAccount {
                         manager.sendKey(sender, "AccountNotFound");
                     } else {
                         try {
-                            account.setPasswordHash(AccountManager.hasher.hash(pswd));
+                            account.setPassword(pswd);
                             manager.sendKey(sender, "ChangePasswordMessage");
                         } catch (Exception e) {
                             if (manager.isDebug()) e.printStackTrace();
@@ -212,7 +211,7 @@ public final class CommandAccount {
                         manager.sendKey(sender, "AccountNotFound");
                     } else {
                         try {
-                            account.setPasswordHash(AccountManager.hasher.hash(pswd));
+                            account.setPassword(pswd);
                             manager.sendKey(sender, "ChangePasswordMessage");
                         } catch (Exception e2) {
                             if (manager.isDebug()) e2.printStackTrace();

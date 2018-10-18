@@ -40,7 +40,7 @@ public class ResetPwTask implements Runnable {
             manager.sendKey(src, "AccountNotFound");
         } else {
             try {
-                account.setPasswordHash(AccountManager.hasher.hash(password));
+                account.setPassword(password);
                 manager.sendKey(src, "ChangePasswordMessage");
             } catch (Exception ex) {
                 manager.console("Error creating hash");

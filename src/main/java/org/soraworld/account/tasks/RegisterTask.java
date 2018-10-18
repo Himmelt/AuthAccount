@@ -27,8 +27,7 @@ public class RegisterTask implements Runnable {
             }
 
             try {
-                String hash = AccountManager.hasher.hash(password);
-                Account account = new Account(player, hash);
+                Account account = new Account(player, password);
                 if (!manager.getDatabase().createAccount(account, true)) {
                     return;
                 }

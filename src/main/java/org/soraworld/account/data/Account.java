@@ -1,6 +1,5 @@
 package org.soraworld.account.data;
 
-import org.soraworld.account.manager.AccountManager;
 import org.soraworld.account.util.IPUtil;
 import org.spongepowered.api.data.DataContainer;
 import org.spongepowered.api.data.DataHolder;
@@ -23,6 +22,9 @@ import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+
+import static org.soraworld.account.util.Hash.check;
+import static org.soraworld.account.util.Hash.hash;
 
 public class Account implements DataManipulator<Account, Account.Immutable> {
 
@@ -50,7 +52,7 @@ public class Account implements DataManipulator<Account, Account.Immutable> {
     public Account(UUID uuid, String username, String password, String ip) {
         this.uuid = uuid;
         this.username = username;
-        this.password = password;
+        this.password = hash(password);
         this.ip = ip;
         this.timestamp = new Timestamp(System.currentTimeMillis());
     }
@@ -79,8 +81,8 @@ public class Account implements DataManipulator<Account, Account.Immutable> {
 
     }
 
-    public boolean checkPassword(AccountManager manager, String userInput) {
-        return AccountManager.hasher.checkPassword(password, userInput);
+    public boolean checkPassword(String userInput) {
+        return check(password, userInput);
     }
 
     public UUID uuid() {
@@ -100,8 +102,8 @@ public class Account implements DataManipulator<Account, Account.Immutable> {
         this.username = username;
     }
 
-    public synchronized void setPasswordHash(String hash) {
-        this.password = hash;
+    public synchronized void setPassword(String pswd) {
+        this.password = hash(pswd);
     }
 
     public synchronized void setIp(String ip) {

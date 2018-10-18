@@ -26,8 +26,7 @@ public class ForceRegTask implements Runnable {
 
         if (account == null) {
             try {
-                String hash = AccountManager.hasher.hash(password);
-                account = new Account(accountIndentifer, "", hash, "invalid");
+                account = new Account(accountIndentifer, "", password, "invalid");
                 manager.getDatabase().createAccount(account, false);
                 manager.sendKey(sender, "ForceRegisterSuccessMessage");
             } catch (Exception ex) {
