@@ -1,24 +1,16 @@
 package org.soraworld.account.listener;
 
-import com.flowpowered.math.vector.Vector3d;
 import org.soraworld.account.data.Account;
 import org.soraworld.account.manager.AccountManager;
 import org.soraworld.account.tasks.LoginMessageTask;
 import org.soraworld.account.util.IPUtil;
 import org.spongepowered.api.Sponge;
 import org.spongepowered.api.command.CommandMapping;
-import org.spongepowered.api.entity.Entity;
 import org.spongepowered.api.entity.living.player.Player;
-import org.spongepowered.api.event.Cancellable;
 import org.spongepowered.api.event.Listener;
 import org.spongepowered.api.event.Order;
-import org.spongepowered.api.event.block.InteractBlockEvent;
-import org.spongepowered.api.event.cause.entity.spawn.EntitySpawnCause;
 import org.spongepowered.api.event.command.SendCommandEvent;
-import org.spongepowered.api.event.entity.DamageEntityEvent;
-import org.spongepowered.api.event.entity.MoveEntityEvent;
 import org.spongepowered.api.event.filter.cause.First;
-import org.spongepowered.api.event.item.inventory.*;
 import org.spongepowered.api.event.message.MessageChannelEvent;
 import org.spongepowered.api.event.network.ClientConnectionEvent;
 import org.spongepowered.api.scheduler.Task;
@@ -86,32 +78,12 @@ public class EventListener {
 
     @Listener
     public void onPlayerJoin(ClientConnectionEvent.Join event) {
-        manager.login(event.getTargetEntity());
+        manager.join(event.getTargetEntity());
     }
 
     @Listener
     public void onPlayerQuit(ClientConnectionEvent.Disconnect event) {
         manager.logout(event.getTargetEntity());
-    }
-
-    @Listener(order = Order.AFTER_PRE)
-    public void onPlayerMove(MoveEntityEvent event, @First Player player) {
-        Vector3d oldLocation = event.getFromTransform().getPosition();
-        Vector3d newLocation = event.getToTransform().getPosition();
-        if ((oldLocation.getFloorX() != newLocation.getFloorX()
-                || oldLocation.getFloorZ() != newLocation.getFloorZ())) {
-            checkLoginStatus(event, player);
-        }
-    }
-
-    @Listener(order = Order.AFTER_PRE)
-    public void onInteractItem(InteractItemEvent event, @First Player player) {
-        checkLoginStatus(event, player);
-    }
-
-    @Listener(order = Order.AFTER_PRE)
-    public void onInventoryOpen(InteractInventoryEvent.Open event, @First Player player) {
-        checkLoginStatus(event, player);
     }
 
     @Listener
@@ -153,65 +125,6 @@ public class EventListener {
                 player.sendMessage(Text.of("您没有执行该操作的权限,请先登录!"));
             }
         }
-    }
-
-    @Listener(order = Order.EARLY)
-    public void onPlayerItemDrop(DropItemEvent.Dispense event, @First EntitySpawnCause spawnCause) {
-        if (spawnCause.getEntity() instanceof Player) {
-            checkLoginStatus(event, (Player) spawnCause.getEntity());
-        }
-    }
-
-    @Listener(order = Order.AFTER_PRE)
-    public void onItemConsume(UseItemStackEvent.Start event, @First Player player) {
-        checkLoginStatus(event, player);
-    }
-
-    @Listener(order = Order.FIRST)
-    public void onInventoryChange(ChangeInventoryEvent event, @First Player player) {
-        checkLoginStatus(event, player);
-    }
-
-    @Listener(order = Order.EARLY)
-    public void onInventoryDrop(DropItemEvent.Dispense event, @First Player player) {
-        checkLoginStatus(event, player);
-    }
-
-    @Listener(order = Order.AFTER_PRE)
-    public void onBlockInteract(InteractBlockEvent event, @First Player player) {
-        checkLoginStatus(event, player);
-    }
-
-    @Listener
-    public void onPlayerDamage(DamageEntityEvent event, @First Player player) {
-        checkLoginStatus(event, player);
-    }
-
-    @Listener(order = Order.FIRST)
-    public void onDamagePlayer(DamageEntityEvent event) {
-        //check the target
-        Entity targetEntity = event.getTargetEntity();
-        //check only if the event isn't already cancelled by the first call
-        if (targetEntity instanceof Player) {
-            checkLoginStatus(event, (Player) event.getTargetEntity());
-        }
-    }
-
-    private boolean checkLoginStatus(Cancellable event, Player player) {
-        if (authAccount.loader().config().bypass() && player.hasPermission(authAccount.plugin().getId() + ".bypass")) {
-            return true;
-        }
-        if (authAccount.loader().config().isCommandOnlyProtection()) {
-            //check if the user is already registered
-            if (authAccount.getDatabase().getAccountIfPresent(player) == null && player.hasPermission(authAccount.plugin().getId() + ".registerRequired")) {
-                event.setCancelled(true);
-                return false;
-            }
-        } else if (!authAccount.getDatabase().isOnline(player)) {
-            event.setCancelled(true);
-            return false;
-        }
-        return true;
     }
 
     public void onAccountLoaded(Player player) {

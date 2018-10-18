@@ -75,6 +75,7 @@ public class AccountManager extends SpongeManager {
     public void logout(Player player) {
         player.getOrCreate(Account.class).ifPresent(account -> {
             account.setOnline(false);
+            // TODO check user data will effect ??
             player.offer(account);
         });
         Account account = database.remove(player);
@@ -94,7 +95,7 @@ public class AccountManager extends SpongeManager {
         }*/
     }
 
-    public void login(Player player) {
+    public void join(Player player) {
         protectionManager.protect(player);
 
 /*        Sponge.getScheduler().createTaskBuilder()
