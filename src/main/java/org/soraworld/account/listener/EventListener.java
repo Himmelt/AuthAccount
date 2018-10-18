@@ -7,7 +7,6 @@ import org.soraworld.account.tasks.LoginMessageTask;
 import org.soraworld.account.util.IPUtil;
 import org.spongepowered.api.Sponge;
 import org.spongepowered.api.command.CommandMapping;
-import org.spongepowered.api.data.key.Keys;
 import org.spongepowered.api.entity.Entity;
 import org.spongepowered.api.entity.living.player.Player;
 import org.spongepowered.api.event.Cancellable;
@@ -22,18 +21,78 @@ import org.spongepowered.api.event.filter.cause.First;
 import org.spongepowered.api.event.item.inventory.*;
 import org.spongepowered.api.event.message.MessageChannelEvent;
 import org.spongepowered.api.event.network.ClientConnectionEvent;
-import org.spongepowered.api.profile.GameProfile;
+import org.spongepowered.api.scheduler.Task;
 import org.spongepowered.api.service.user.UserStorageService;
 import org.spongepowered.api.text.Text;
 
-import javax.swing.*;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 public class EventListener {
+
+    private final AccountManager manager;
+    private final UserStorageService userStorage;
+    private static final Pattern USERNAME = Pattern.compile("[A-Za-z0-9_-]{1,15}");
+
+    public EventListener(AccountManager manager, UserStorageService userStorage) {
+        this.manager = manager;
+        this.userStorage = userStorage;
+    }
+
+    /* Auth Join Quit */
+
+    @Listener
+    public void onPlayerAuth(ClientConnectionEvent.Auth event) {
+        final UUID uuid = event.getProfile().getUniqueId();
+        // TODO check illegal username
+        String name = event.getProfile().getName().orElse(null);
+        if (name != null && !name.isEmpty()) {
+            if (USERNAME.matcher(name).matches()) {
+                Optional<Player> player = Sponge.getServer().getPlayer(name);
+                if (player.isPresent() && player.get().getName().equals(name)) {
+                    event.setMessage(Text.of(manager.trans("alreadyOnline")));
+                    event.setCancelled(true);
+                } else {
+                    userStorage.get(event.getProfile()).ifPresent(user -> {
+                        user.getOrCreate(Account.class).ifPresent(data -> {
+                            if (data.uid >= 0) {
+                                Task.builder().async().name("SyncSQLData").execute(() -> {
+                                    Account acc = manager.database.loadAccount(uuid);
+                                    if (uuid.equals(acc.uuid())) {
+                                        data.copy(acc);
+                                        // TODO check sync main thread ???
+                                        Task.builder().name("SyncUserData").execute(() -> {
+                                            user.offer(data);
+                                            if (manager.isDebug()) manager.console("SyncUserData");
+                                        }).submit(manager.getPlugin());
+                                    } else {
+                                        // TODO kick ???
+                                    }
+                                }).submit(manager.getPlugin());
+                            }
+                        });
+                    });
+                }
+                return;
+            }
+        }
+        event.setMessage(Text.of(manager.trans("illegalName")));
+        event.setCancelled(true);
+    }
+
+    @Listener
+    public void onPlayerJoin(ClientConnectionEvent.Join event) {
+        manager.login(event.getTargetEntity());
+    }
+
+    @Listener
+    public void onPlayerQuit(ClientConnectionEvent.Disconnect event) {
+        manager.logout(event.getTargetEntity());
+    }
 
     @Listener(order = Order.AFTER_PRE)
     public void onPlayerMove(MoveEntityEvent event, @First Player player) {
@@ -153,60 +212,6 @@ public class EventListener {
             return false;
         }
         return true;
-    }
-
-    private final AccountManager manager;
-    private static final String VALID_USERNAME = "[A-Za-z0-9_]{1,15}";
-    private final UserStorageService userStorage;
-
-    public ConnectionListener(AccountManager manager) {
-        this.manager = manager;
-        userStorage = Sponge.getServiceManager().provide(UserStorageService.class).orElse(null);
-    }
-
-    @Listener
-    public void onPlayerQuit(ClientConnectionEvent.Disconnect event) {
-        manager.logout(event.getTargetEntity());
-    }
-
-    @Listener
-    public void onPlayerJoin(ClientConnectionEvent.Join event) {
-        manager.login(event.getTargetEntity());
-    }
-
-    @Listener
-    public void onPlayerAuth(ClientConnectionEvent.Auth event) {
-        event.getConnection().getAddress().
-        GameProfile profile = event.getProfile();
-        // TODO 如果玩家的用户名和之前注册的大小写不一致
-        // TODO 禁止登陆
-        profile.getName().ifPresent(name -> {
-            userStorage.get(profile.getUniqueId()).ifPresent(user -> {
-                if (user.getName().equals(name)) {
-
-                } else {
-                    event.setMessage(Text.of(manager.trans("notMatchReg")));
-                    event.setCancelled(true);
-                }
-            });
-
-        });
-        String playerName = event.getProfile().getName().get();
-        UUID uuid = event.getProfile().getUniqueId();
-        if (!playerName.matches(VALID_USERNAME)) {
-            //validate invalid characters
-            event.setMessage(Text.of(manager.trans("illegalName")));
-            event.setCancelled(true);
-        } else {
-            Optional<Player> player = Sponge.getServer().getPlayer(playerName);
-            Sponge.getServer().getPlayer(uuid).ifPresent(player1 -> {
-
-            });
-            if (player.isPresent() && player.get().getName().equals(playerName)) {
-                event.setMessage(Text.of(manager.trans("alreadyOnline")));
-                event.setCancelled(true);
-            }
-        }
     }
 
     public void onAccountLoaded(Player player) {

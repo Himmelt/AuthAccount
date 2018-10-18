@@ -26,7 +26,7 @@ import java.util.UUID;
 
 public class Account implements DataManipulator<Account, Account.Immutable> {
 
-    private int uid;
+    public int uid = -1;
     private UUID uuid;
     private String ip;
     private String email;
@@ -48,10 +48,9 @@ public class Account implements DataManipulator<Account, Account.Immutable> {
 
     //new account
     public Account(UUID uuid, String username, String password, String ip) {
-        this.uuid = uuid.toString();
+        this.uuid = uuid;
         this.username = username;
-        this.passwordHash = password;
-
+        this.password = password;
         this.ip = ip;
         this.timestamp = new Timestamp(System.currentTimeMillis());
     }
@@ -59,9 +58,10 @@ public class Account implements DataManipulator<Account, Account.Immutable> {
     //existing account
     public Account(ResultSet resultSet) throws SQLException {
         //uuid in string format
-        this.uuid = resultSet.getString(2);
+        this.uid = resultSet.getInt(0);
+        this.uuid = java.util.UUID.fromString(resultSet.getString(2));
         this.username = resultSet.getString(3);
-        this.passwordHash = resultSet.getString(4);
+        this.password = resultSet.getString(4);
         this.ip = resultSet.getString(5);
         this.timestamp = resultSet.getTimestamp(6);
         this.email = resultSet.getString(7);
@@ -184,6 +184,10 @@ public class Account implements DataManipulator<Account, Account.Immutable> {
 
     public DataContainer toContainer() {
         return DataContainer.createNew();
+    }
+
+    public void copy(Account acc) {
+
     }
 
     public static class Immutable implements ImmutableDataManipulator<Immutable, Account> {
