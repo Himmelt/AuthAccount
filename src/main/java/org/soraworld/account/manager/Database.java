@@ -1,9 +1,10 @@
-package org.soraworld.account.data;
+package org.soraworld.account.manager;
 
 import com.google.common.primitives.Bytes;
 import com.google.common.primitives.Longs;
-import org.soraworld.account.manager.AccountManager;
-import org.soraworld.account.manager.DatabaseSetting;
+import org.soraworld.account.data.Account;
+import org.soraworld.hocon.node.Serializable;
+import org.soraworld.hocon.node.Setting;
 import org.soraworld.violet.util.ChatColor;
 import org.spongepowered.api.Sponge;
 import org.spongepowered.api.entity.living.player.Player;
@@ -11,66 +12,63 @@ import org.spongepowered.api.service.sql.SqlService;
 
 import java.io.File;
 import java.nio.file.Path;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.sql.*;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
+@Serializable
 public class Database {
-
-    public static final String USERS_TABLE = "accounts";
-
-    //this cache is thread-safe
-    private final ConcurrentHashMap<UUID, Account> cache = new ConcurrentHashMap<>();
-
-    private final String jdbcUrl;
-    private final String username;
-    private final String password;
+    @Setting(comment = "comment.database.enable")
+    private boolean enable = false;
+    @Setting(comment = "comment.database.type")
+    private String type = "H2";
+    @Setting(comment = "comment.database.host")
+    private String host = "%path%";
+    @Setting(comment = "comment.database.port")
+    private int port = 3306;
+    @Setting(comment = "comment.database.name")
+    private String name = "sponge";
+    @Setting(comment = "comment.database.table")
+    private String table = "accounts";
+    @Setting(comment = "comment.database.username")
+    private String username = "";
+    @Setting(comment = "comment.database.password")
+    private String password = "";
+    @Setting(comment = "comment.database.useSSL")
+    private boolean useSSL = false;
 
     private SqlService sql;
-
+    private String jdbcURL;
+    private final String storage;
     private final AccountManager manager;
+    private static final ConcurrentHashMap<UUID, Account> cache = new ConcurrentHashMap<>();
 
-    public Database(AccountManager manager, Path path) {
+    public Database(AccountManager manager, Path root) {
         this.manager = manager;
+        this.storage = host.replace("%path%", root.normalize().toString());
+    }
 
-        String pluginId = manager.getPlugin().getId();
-
-        DatabaseSetting dbCfg = manager.databaseSetting;
-
-        if (dbCfg.isMySQL()) {
-            this.username = dbCfg.username;
-            this.password = dbCfg.password;
-        } else {
-            this.username = "";
-            this.password = "";
+    private String getJdbcURL() {
+        if (jdbcURL == null) {
+            StringBuilder builder = new StringBuilder("jdbc:").append(type.toLowerCase()).append("://");
+            if ("MySQL".equalsIgnoreCase(type)) {
+                //jdbc:<engine>://[<username>[:<password>]@]<host>/<database>
+                builder.append(username).append(':').append(password).append('@')
+                        .append(host).append(':').append(port).append('/')
+                        .append(name).append("?useSSL").append('=').append(useSSL);
+            } else if ("SQLite".equalsIgnoreCase(type)) {
+                builder.append(storage).append(File.separatorChar).append(manager.getPlugin().getId()).append(".db");
+            } else {
+                builder.append(storage).append(File.separatorChar).append(manager.getPlugin().getId());
+            }
+            jdbcURL = builder.toString();
         }
-
-        String storagePath = dbCfg.path.replace("%DIR%", path.normalize().toString());
-
-        StringBuilder sqlURL = new StringBuilder("jdbc:").append(dbCfg.type.toLowerCase()).append("://");
-        if (dbCfg.isMySQL()) {
-            //jdbc:<engine>://[<username>[:<password>]@]<host>/<database> - copied from sponge doc
-            sqlURL.append(username).append(':').append(password).append('@')
-                    .append(dbCfg.path)
-                    .append(':')
-                    .append(dbCfg.port)
-                    .append('/')
-                    .append(dbCfg.getDBName())
-                    .append("?useSSL").append('=').append(dbCfg.useSSL);
-        } else if (dbCfg.isSQLite()) {
-            sqlURL.append(storagePath).append(File.separatorChar).append(pluginId).append(".db");
-        } else {
-            sqlURL.append(storagePath).append(File.separatorChar).append(pluginId);
-        }
-        this.jdbcUrl = sqlURL.toString();
+        return jdbcURL;
     }
 
     public Connection getConnection() throws SQLException {
         if (sql == null) sql = Sponge.getServiceManager().provideUnchecked(SqlService.class);
-        return sql.getDataSource(jdbcUrl).getConnection();
+        return sql.getDataSource(getJdbcURL()).getConnection();
     }
 
     public Account getAccountIfPresent(Player player) {
@@ -84,11 +82,62 @@ public class Database {
 
     public void createTable() {
         try {
-            DatabaseMigration migration = new DatabaseMigration(manager);
-            migration.migrateName();
-            migration.createTable();
+            createTable2();
         } catch (SQLException sqlEx) {
             manager.console(ChatColor.RED + "Error creating database table");
+        }
+    }
+
+    public void createTable2() throws SQLException {
+        Connection conn = null;
+        try {
+            conn = getConnection();
+
+            boolean tableExists = false;
+            try {
+                //check if the table already exists
+                Statement statement = conn.createStatement();
+                statement.execute("SELECT 1 FROM " + table);
+                statement.close();
+
+                tableExists = true;
+            } catch (SQLException sqlEx) {
+                manager.console("Table " + table + " doesn't exist,will create it!");
+            }
+
+            if (!tableExists) {
+                if ("SQLite".equalsIgnoreCase(type)) {
+                    Statement statement = conn.createStatement();
+                    statement.execute("CREATE TABLE " + table + " ( "
+                            + "`userid` INTEGER PRIMARY KEY AUTOINCREMENT, "
+                            + "`uuid` char(36) NOT NULL DEFAULT '' , "
+                            + "`username` char(16) NOT NULL DEFAULT '' , "
+                            + "`password` varchar(64) NOT NULL DEFAULT '' , "
+                            + "`ip` varchar(32) NOT NULL DEFAULT '' , "
+                            + "`lastlogin` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP  , "
+                            + "`email` VARCHAR(64) DEFAULT NULL , "
+                            + "`online` BOOLEAN DEFAULT 0, "
+                            + "UNIQUE (`uuid`) "
+                            + ')');
+                    statement.close();
+                } else {
+                    Statement statement = conn.createStatement();
+                    statement.execute("CREATE TABLE " + table + " ( "
+                            + "`userid` INT UNSIGNED NOT NULL AUTO_INCREMENT , "
+                            + "`uuid` char(36) NOT NULL DEFAULT '' COMMENT 'UUID' , "
+                            + "`username` char(16) NOT NULL DEFAULT '' COMMENT 'Username' , "
+                            + "`password` varchar(64) NOT NULL DEFAULT '' , "
+                            + "`ip` varchar(32) NOT NULL DEFAULT '' , "
+                            + "`lastlogin` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP , "
+                            + "`email` VARCHAR(64) DEFAULT NULL , "
+                            + "`online` BOOLEAN DEFAULT 0, "
+                            + "PRIMARY KEY (`userid`) , UNIQUE (`uuid`) "
+                            + ')');
+                    statement.close();
+                }
+            }
+        } finally {
+            closeQuietly(conn);
         }
     }
 
@@ -97,7 +146,7 @@ public class Database {
         try {
             conn = getConnection();
 
-            PreparedStatement statement = conn.prepareStatement("DELETE FROM " + USERS_TABLE + " WHERE `uuid`=? OR `username`=?");
+            PreparedStatement statement = conn.prepareStatement("DELETE FROM " + table + " WHERE `uuid`=? OR `username`=?");
             statement.setString(1, identity);
             statement.setString(2, identity);
             int affectedRows = statement.executeUpdate();
@@ -124,7 +173,7 @@ public class Database {
         try {
             conn = getConnection();
 
-            PreparedStatement statement = conn.prepareStatement("DELETE FROM " + USERS_TABLE + " WHERE UUID=?");
+            PreparedStatement statement = conn.prepareStatement("DELETE FROM " + table + " WHERE UUID=?");
 
             byte[] mostBytes = Longs.toByteArray(uuid.getMostSignificantBits());
             byte[] leastBytes = Longs.toByteArray(uuid.getLeastSignificantBits());
@@ -160,7 +209,7 @@ public class Database {
         Connection conn = null;
         try {
             conn = getConnection();
-            PreparedStatement prepareStatement = conn.prepareStatement("SELECT * FROM " + USERS_TABLE + " WHERE `uuid`=?");
+            PreparedStatement prepareStatement = conn.prepareStatement("SELECT * FROM " + table + " WHERE `uuid`=?");
 
             prepareStatement.setString(1, uuid.toString());
 
@@ -183,7 +232,7 @@ public class Database {
         try {
             conn = getConnection();
 
-            PreparedStatement statement = conn.prepareStatement("SELECT * FROM " + USERS_TABLE + " WHERE Username=?");
+            PreparedStatement statement = conn.prepareStatement("SELECT * FROM " + table + " WHERE Username=?");
             statement.setString(1, playerName);
 
             ResultSet resultSet = statement.executeQuery();
@@ -204,7 +253,7 @@ public class Database {
         try {
             conn = getConnection();
 
-            PreparedStatement statement = conn.prepareStatement("SELECT COUNT(*) FROM " + USERS_TABLE + " WHERE IP=?");
+            PreparedStatement statement = conn.prepareStatement("SELECT COUNT(*) FROM " + table + " WHERE IP=?");
             statement.setString(1, ip);
 
             ResultSet resultSet = statement.executeQuery();
@@ -224,12 +273,12 @@ public class Database {
         Connection conn = null;
         try {
             conn = getConnection();
-            PreparedStatement prepareStatement = conn.prepareStatement("INSERT INTO " + USERS_TABLE
+            PreparedStatement prepareStatement = conn.prepareStatement("INSERT INTO " + table
                     + " (`uuid`, `username`, `password`, `ip`, `email`, `lastLogin`) VALUES (?,?,?,?,?,?)");
 
             prepareStatement.setString(1, account.uuid().toString());
             prepareStatement.setString(2, account.username());
-            prepareStatement.setString(3, account.getPassword());
+            prepareStatement.setString(3, account.password());
 
             prepareStatement.setString(4, account.ip());
 
@@ -268,7 +317,7 @@ public class Database {
         try {
             conn = getConnection();
 
-            PreparedStatement prepareStatement = conn.prepareStatement("UPDATE " + USERS_TABLE
+            PreparedStatement prepareStatement = conn.prepareStatement("UPDATE " + table
                     + " SET `online`=? WHERE `uuid`=?");
 
             prepareStatement.setInt(1, online ? 1 : 0);
@@ -290,7 +339,7 @@ public class Database {
             conn = getConnection();
 
             //set all player accounts existing in the database to unlogged
-            conn.createStatement().execute("UPDATE " + USERS_TABLE + " SET `online`=0");
+            conn.createStatement().execute("UPDATE " + table + " SET `online`=0");
         } catch (SQLException ex) {
             if (manager.isDebug()) ex.printStackTrace();
             manager.console(ChatColor.RED + "Error updating user account !!");
@@ -304,11 +353,11 @@ public class Database {
         try {
             conn = getConnection();
 
-            PreparedStatement statement = conn.prepareStatement("UPDATE " + USERS_TABLE
+            PreparedStatement statement = conn.prepareStatement("UPDATE " + table
                     + " SET `username`=?, `password`=?, `ip`=?, `lastLogin`=?, `email`=? WHERE `uuid`=?");
             //username is now changeable by Mojang - so keep it up to date
             statement.setString(1, account.username());
-            statement.setString(2, account.getPassword());
+            statement.setString(2, account.password());
             statement.setString(3, account.ip());
 
             statement.setTimestamp(4, account.getTimestamp());

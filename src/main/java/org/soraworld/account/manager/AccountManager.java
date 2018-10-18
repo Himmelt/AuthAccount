@@ -1,7 +1,6 @@
 package org.soraworld.account.manager;
 
 import org.soraworld.account.data.Account;
-import org.soraworld.account.data.Database;
 import org.soraworld.account.util.Rand;
 import org.soraworld.hocon.node.Setting;
 import org.soraworld.violet.manager.SpongeManager;
@@ -25,15 +24,13 @@ import java.util.*;
 public class AccountManager extends SpongeManager {
 
     @Setting(comment = "comment.general")
-    public GeneralSetting general = new GeneralSetting();
+    public final GeneralSetting general;
     @Setting(comment = "comment.spawn")
-    public SpawnSetting spawn = new SpawnSetting();
+    public final SpawnSetting spawn;
     @Setting(path = "database", comment = "comment.database")
-    public DatabaseSetting databaseSetting = new DatabaseSetting();
-    @Setting(comment = "comment.email")
-    public EmailSetting emailSetting = new EmailSetting();
-
     public final Database database;
+    @Setting(comment = "comment.email")
+    public final EmailSetting emailSetting;
 
     private final HashMap<UUID, Location<World>> oldLocations = new HashMap<>();
 
@@ -42,7 +39,10 @@ public class AccountManager extends SpongeManager {
 
     public AccountManager(SpongePlugin plugin, Path path) {
         super(plugin, path);
-        database = new Database(this, path);
+        this.general = new GeneralSetting();
+        this.spawn = new SpawnSetting();
+        this.database = new Database(this, path);
+        this.emailSetting = new EmailSetting();
     }
 
     public ChatColor defChatColor() {
@@ -51,7 +51,6 @@ public class AccountManager extends SpongeManager {
 
     public void beforeLoad() {
         //run this task sync in order let it finish before the process ends
-        Database database = new Database(this, path);
         database.close();
         Sponge.getServer().getOnlinePlayers().forEach(this::unprotect);
     }
@@ -102,10 +101,6 @@ public class AccountManager extends SpongeManager {
                 .async()
                 .execute(() -> onAccountLoaded(player))
                 .submit(plugin);*/
-    }
-
-    public Database getDatabase() {
-        return database;
     }
 
     public void sendResetEmail(Account account, Player player) {

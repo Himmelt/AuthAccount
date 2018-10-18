@@ -22,12 +22,12 @@ public class ForceRegTask implements Runnable {
     }
 
     public void run() {
-        Account account = manager.getDatabase().loadAccount(accountIndentifer);
+        Account account = manager.database.loadAccount(accountIndentifer);
 
         if (account == null) {
             try {
                 account = new Account(accountIndentifer, "", password, "invalid");
-                manager.getDatabase().createAccount(account, false);
+                manager.database.createAccount(account, false);
                 manager.sendKey(sender, "ForceRegisterSuccessMessage");
             } catch (Exception ex) {
                 manager.console("Error creating hash");

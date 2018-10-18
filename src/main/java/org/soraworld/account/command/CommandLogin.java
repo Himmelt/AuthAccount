@@ -20,7 +20,7 @@ public class CommandLogin extends SpongeCommand {
     }
 
     public void execute(Player player, Args args) {
-        Account account = manager.getDatabase().getAccountIfPresent(player);
+        Account account = manager.database.getAccountIfPresent(player);
         if (account != null && account.isOnline()) {
             manager.sendKey(player, "AlreadyLoggedInMessage");
             return;

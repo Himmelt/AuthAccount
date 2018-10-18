@@ -22,7 +22,7 @@ public class LoginTask implements Runnable {
 
     @Override
     public void run() {
-        Account account = manager.getDatabase().loadAccount(player);
+        Account account = manager.database.loadAccount(player);
         if (account == null) {
             manager.sendKey(player, "AccountNotFound");
             return;
@@ -50,9 +50,9 @@ public class LoginTask implements Runnable {
                         .submit(manager);
 
                 //flushes the ip update
-                manager.getDatabase().save(account);
+                manager.database.save(account);
                 if (manager.general.updateLoginStatus) {
-                    manager.getDatabase().flushLoginStatus(account, true);
+                    manager.database.flushLoginStatus(account, true);
                 }
             } else {
                 attempts++;

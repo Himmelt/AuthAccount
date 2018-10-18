@@ -93,8 +93,7 @@ public class Account implements DataManipulator<Account, Account.Immutable> {
         return username;
     }
 
-    /* package */
-    String getPassword() {
+    public String password() {
         return password;
     }
 

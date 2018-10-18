@@ -7,6 +7,15 @@ comment {
   general = "General settings"
   database = "Database settings"
   email = "E-mail server settings"
+  database {
+    enable = "Enable database storage."
+    type = "SQL server type. You can choose between h2, SQLite and MySQL"
+    path = "Path where the database is located. This can be a file path (h2/SQLite) or an IP/Domain(MySQL)"
+    port = "Port for example MySQL connections"
+    username = "Username to login the database system"
+    password = "Password in order to login"
+    useSSL = "It's strongly recommended to enable SSL and setup a SSL certificate if the MySQL server isn't running on the same machine"
+  }
 }
 
 comment = "When the account does not exist on the account database."

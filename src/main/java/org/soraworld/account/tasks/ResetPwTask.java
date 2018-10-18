@@ -31,9 +31,9 @@ public class ResetPwTask implements Runnable {
     public void run() {
         Account account;
         if (accountIndentifer instanceof String) {
-            account = manager.getDatabase().loadAccount((String) accountIndentifer);
+            account = manager.database.loadAccount((String) accountIndentifer);
         } else {
-            account = manager.getDatabase().loadAccount((UUID) accountIndentifer);
+            account = manager.database.loadAccount((UUID) accountIndentifer);
         }
 
         if (account == null) {

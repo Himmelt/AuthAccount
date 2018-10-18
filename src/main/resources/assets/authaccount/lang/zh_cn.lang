@@ -8,6 +8,10 @@ comment {
   database = "数据库设置"
   email = "邮件发送服务器设置"
   keepNames = "保留用户名, 不区分大小写\n此列表中的用户名不可被玩家注册"
+  database {
+    enable = "启用数据库存储."
+    type = "数据库类型, 可选 H2/SQLite/MySQL, Sponge 官方 !不建议 使用 SQLite"
+  }
 }
 
 accountAlreadyExists = "&4账户已注册,请输入 &a/login <密码> &r登录."
