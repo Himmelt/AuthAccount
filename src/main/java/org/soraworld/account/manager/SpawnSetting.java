@@ -11,13 +11,13 @@ import java.util.Optional;
 @Serializable
 class SpawnSetting {
     @Setting
-    private boolean enabled;
+    public boolean enabled;
     @Setting(comment = "Should the plugin use the default spawn from the world you specify below")
-    private boolean defaultSpawn;
+    public boolean defaultSpawn;
     @Setting(comment = "Spawn world or let it empty to use the default world specified in the server properties")
-    private String worldName = Sponge.getServer().getDefaultWorldName();
+    public String worldName = Sponge.getServer().getDefaultWorldName();
     @Setting
-    private int coordX, coordY, coordZ;
+    public int coordX, coordY, coordZ;
 
     public Location<World> getSpawnLocation() {
         if (worldName.isEmpty()) worldName = Sponge.getServer().getDefaultWorldName();

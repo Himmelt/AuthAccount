@@ -9,8 +9,11 @@ import org.soraworld.violet.manager.SpongeManager;
 import org.soraworld.violet.plugin.SpongePlugin;
 import org.soraworld.violet.util.ChatColor;
 import org.spongepowered.api.Sponge;
+import org.spongepowered.api.data.manipulator.mutable.entity.MovementSpeedData;
 import org.spongepowered.api.entity.living.player.Player;
 import org.spongepowered.api.scheduler.Task;
+import org.spongepowered.api.world.Location;
+import org.spongepowered.api.world.World;
 
 import javax.mail.Message;
 import javax.mail.Session;
@@ -18,12 +21,7 @@ import javax.mail.Transport;
 import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
 import java.nio.file.Path;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Properties;
-
-import static jdk.nashorn.internal.objects.NativeString.replace;
+import java.util.*;
 
 public class AccountManager extends SpongeManager {
 
@@ -37,8 +35,12 @@ public class AccountManager extends SpongeManager {
     public EmailSetting emailSetting = new EmailSetting();
 
     public final Database database;
-    public final ProtectionManager protectionManager = new ProtectionManager();
     public static final BCryptHasher hasher = new BCryptHasher();
+
+    private final HashMap<UUID, Location<World>> oldLocations = new HashMap<>();
+
+    private static final HashMap<UUID, Double> originWalkSpeed = new HashMap<>();
+    private static final HashMap<UUID, Double> originFlySpeed = new HashMap<>();
 
     public AccountManager(SpongePlugin plugin, Path path) {
         super(plugin, path);
@@ -53,13 +55,13 @@ public class AccountManager extends SpongeManager {
         //run this task sync in order let it finish before the process ends
         Database database = new Database(this, path);
         database.close();
-        Sponge.getServer().getOnlinePlayers().forEach(protectionManager::unprotect);
+        Sponge.getServer().getOnlinePlayers().forEach(this::unprotect);
     }
 
     public void afterLoad() {
         database.createTable();
         Sponge.getServer().getOnlinePlayers().forEach(player -> {
-            protectionManager.protect(player);
+            protect(player);
             database.loadAccount(player);
         });
     }
@@ -80,7 +82,7 @@ public class AccountManager extends SpongeManager {
         });
         Account account = database.remove(player);
 
-        protectionManager.unprotect(player);
+        unprotect(player);
 
 /*        if (account != null) {
             plugin.getAttempts().remove(player.getName());
@@ -96,7 +98,7 @@ public class AccountManager extends SpongeManager {
     }
 
     public void join(Player player) {
-        protectionManager.protect(player);
+        protect(player);
 
 /*        Sponge.getScheduler().createTaskBuilder()
                 .async()
@@ -127,12 +129,12 @@ public class AccountManager extends SpongeManager {
             //sender email with an alias
             message.setFrom(new InternetAddress(YuiAccount, emailSetting.getSenderName()));
             message.setRecipient(Message.RecipientType.TO, new InternetAddress(account.getEmail(), account.username()));
-            message.setSubject(replace(emailSetting.getSubject(), account, password));
+            message.setSubject(replace(emailSetting.getSubject(), player, password));
 
             //current time
             message.setSentDate(new Date());
 
-            String htmlContent = replace(emailSetting.getText(), account, password);
+            String htmlContent = replace(emailSetting.getText(), player, password);
             //allow html
             message.setContent(htmlContent, "text/html;charset=utf-8");
             //we only need to send the message so we use smtp
@@ -162,7 +164,64 @@ public class AccountManager extends SpongeManager {
         }
     }
 
+    private static String replace(String text, Player player, String password) {
+        return text.replace("%player%", player.getName()).replace("%password%", password);
+    }
+
     public Map<String, Integer> getAttempts() {
         return new HashMap<>();
+    }
+
+    public void protect(Player player) {
+        player.getOrCreate(MovementSpeedData.class).ifPresent(speed -> {
+            originWalkSpeed.put(player.getUniqueId(), speed.walkSpeed().get());
+            originFlySpeed.put(player.getUniqueId(), speed.flySpeed().get());
+            // TODO check negative speed
+            speed.walkSpeed().set(0.0D);
+            speed.flySpeed().set(0.0D);
+            player.offer(speed);
+        });
+        if (spawn.enabled) {
+            Location<World> spawnLocation = spawn.getSpawnLocation();
+            if (spawnLocation != null) {
+                oldLocations.put(player.getUniqueId(), player.getLocation());
+                if (general.safeLocation) {
+                    Sponge.getTeleportHelper().getSafeLocation(spawnLocation).ifPresent(player::setLocation);
+                } else {
+                    player.setLocation(spawnLocation);
+                }
+            }
+        } else {
+            Location<World> oldLoc = player.getLocation();
+            //sometimes players stuck in a wall
+            if (general.safeLocation) {
+                Sponge.getTeleportHelper().getSafeLocation(oldLoc).ifPresent(player::setLocation);
+            } else {
+                player.setLocation(oldLoc);
+            }
+        }
+    }
+
+    public void unprotect(Player player) {
+        UUID uuid = player.getUniqueId();
+        player.getOrCreate(MovementSpeedData.class).ifPresent(speed -> {
+            // TODO check default value
+            speed.walkSpeed().set(originWalkSpeed.getOrDefault(uuid, 0.1D));
+            originWalkSpeed.remove(uuid);
+            speed.flySpeed().set(originFlySpeed.getOrDefault(uuid, 0.1D));
+            originFlySpeed.remove(uuid);
+            player.offer(speed);
+        });
+
+        Location<World> oldLocation = oldLocations.remove(uuid);
+        if (oldLocation == null) {
+            return;
+        }
+
+        if (general.safeLocation) {
+            Sponge.getTeleportHelper().getSafeLocation(oldLocation).ifPresent(player::setLocation);
+        } else {
+            player.setLocation(oldLocation);
+        }
     }
 }

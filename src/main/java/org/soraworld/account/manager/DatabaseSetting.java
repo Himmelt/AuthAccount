@@ -6,6 +6,9 @@ import org.soraworld.hocon.node.Setting;
 @Serializable
 public class DatabaseSetting {
 
+    @Setting(comment = "comment.database.enable")
+    public boolean enable = false;
+
     @Setting(comment = "SQL server type. You can choose between h2, SQLite and MySQL")
     public String type = "h2";
 
@@ -18,6 +21,9 @@ public class DatabaseSetting {
     @Setting(comment = "Database name")
     private String database = "sponge";
 
+    @Setting
+    String table = "accounts";
+
     @Setting(comment = "Username to login the database system")
     private String username = "";
 
@@ -28,36 +34,14 @@ public class DatabaseSetting {
             "running on the same machine")
     private boolean useSSL = false;
 
-    public String getPath() {
-        return path;
-    }
-
-    public int getPort() {
-        return port;
-    }
-
-    public String getDBName() {
-        return database;
-    }
-
-    public String getUsername() {
-        return username;
-    }
-
-    public String getPassword() {
-        return password;
-    }
-
-    public boolean isUseSSL() {
-        return useSSL;
-    }
-
     public boolean isMySQL() {
         return "MySQL".equalsIgnoreCase(type);
     }
+
     public boolean isH2() {
         return "H2".equalsIgnoreCase(type);
     }
+
     public boolean isSQLite() {
         return "SQLite".equalsIgnoreCase(type);
     }

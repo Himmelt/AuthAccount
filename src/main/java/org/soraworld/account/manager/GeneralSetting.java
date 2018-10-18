@@ -1,19 +1,14 @@
 package org.soraworld.account.manager;
 
-import com.google.common.collect.Lists;
 import org.soraworld.hocon.node.Serializable;
 import org.soraworld.hocon.node.Setting;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 
 @Serializable
 public
 class GeneralSetting {
-
-    @Setting(comment = "Algorithms for hashing user passwords. You can also choose totp")
-    public String hashAlgo = "bcrypt";
 
     @Setting(comment = "Should the plugin login users automatically if it's the same account from the same IP")
     public boolean ipAutoLogin = false;
@@ -36,17 +31,11 @@ class GeneralSetting {
     @Setting(comment = "Should the plugin save the login status to the database")
     public boolean updateLoginStatus;
 
-    @Setting(comment = "Do you allow your users to skip authentication with the bypass permission")
-    public boolean bypassPermission;
-
     @Setting(comment = "How many login attempts are allowed until everything is blocked")
     public int maxAttempts = 3;
 
     @Setting(comment = "How seconds the user should wait after the user tried to make too many attempts")
     public int waitTime = 300;
-
-    @Setting(comment = "Custom command that should run after the user tried to make too many attempts")
-    public String lockCommand = "";
 
     @Setting(comment = "How many accounts are allowed per ip-addres. Use 0 to disable it")
     public int maxIpReg = 0;
@@ -54,10 +43,6 @@ class GeneralSetting {
     @Setting(comment = "Interval where the please login will be printed to the user")
     public int messageInterval = 2;
 
-    @Setting(comment = "comment.keepNames")
-    public ArrayList<String> keepNames = new ArrayList<>(Arrays.asList("op", "server", "admin", "administrator", "notch"));
-
-    @Setting(comment = "If command only protection is enabled, these commands are protected. If the list is empty"
-            + " all commands are protected")
-    private List<String> protectedCommands = Lists.newArrayList("op", "pex");
+    @Setting(comment = "comment.banNames")
+    public ArrayList<String> banNames = new ArrayList<>(Arrays.asList("op", "server", "admin", "administrator", "notch"));
 }
