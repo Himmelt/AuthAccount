@@ -59,7 +59,10 @@ public class AuthAccount extends SpongePlugin {
     protected List<Object> registerListeners() {
         UserStorageService service = Sponge.getServiceManager().provide(UserStorageService.class).orElse(null);
         if (service != null) return Collections.singletonList(new EventListener((AccountManager) manager, service));
-        else return Collections.emptyList();
+        else {
+            manager.consoleKey("invalidStorageService");
+            return Collections.emptyList();
+        }
     }
 
     protected void registerCommands() {

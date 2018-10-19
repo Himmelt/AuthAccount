@@ -40,8 +40,14 @@ public class AccountManager extends SpongeManager {
         super(plugin, path);
         this.general = new General();
         this.database = new Database(this, path);
-        this.email = new Email(this);
+        this.email = new Email(this, path);
         this.spawn = new Spawn();
+    }
+
+    public boolean setLang(String lang) {
+        boolean success = super.setLang(lang);
+        email.loadHtml(lang);
+        return success;
     }
 
     public ChatColor defChatColor() {
@@ -164,7 +170,7 @@ public class AccountManager extends SpongeManager {
     }
 
     public Account getAccountIfPresent(Player player) {
-        return database.getAccountIfPresent(player);
+        return database.getAccount(player);
     }
 
     public boolean saveAccount(Account account) {

@@ -72,12 +72,12 @@ public class Database {
         return sql.getDataSource(getJdbcURL()).getConnection();
     }
 
-    public Account getAccountIfPresent(Player player) {
+    public Account getAccount(Player player) {
         return cache.get(player.getUniqueId());
     }
 
     public boolean isOnline(Player player) {
-        Account account = getAccountIfPresent(player);
+        Account account = getAccount(player);
         return account != null && account.isOnline();
     }
 

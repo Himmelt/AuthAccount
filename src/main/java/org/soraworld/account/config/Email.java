@@ -5,6 +5,7 @@ import org.soraworld.account.manager.AccountManager;
 import org.soraworld.account.util.Rand;
 import org.soraworld.hocon.node.Serializable;
 import org.soraworld.hocon.node.Setting;
+import org.soraworld.violet.util.ChatColor;
 import org.spongepowered.api.entity.living.player.Player;
 import org.spongepowered.api.scheduler.Task;
 
@@ -13,6 +14,12 @@ import javax.mail.Session;
 import javax.mail.Transport;
 import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
+import java.io.BufferedReader;
+import java.io.FileInputStream;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Date;
 import java.util.Properties;
 
@@ -37,20 +44,39 @@ public class Email {
     @Setting(comment = "Displays as sender in the email client")
     private String senderName = "Your minecraft server name";
 
-    @Setting(comment = "Email subject/title")
-    private String subject = "Your new Password";
-
-    @Setting(comment = "Email contents. You can use HTML here")
-    private String text = "New password for %player% on Minecraft server %server%: %password%";
-
     private final AccountManager manager;
+    private String htmlText = "New password for %player% on Minecraft server %server%: %password%";
+    private final Path root;
 
-    public Email(AccountManager manager) {
+    public Email(AccountManager manager, Path root) {
         this.manager = manager;
+        this.root = root;
+    }
+
+    public void loadHtml(String lang) {
+        Path htmlFile = root.resolve("mail").resolve(lang + ".html");
+        boolean extract = false;
+        try {
+            if (Files.notExists(htmlFile)) {
+                Files.createDirectories(htmlFile.getParent());
+                Files.copy(manager.getPlugin().getAsset("mail/" + lang + ".html"), htmlFile);
+            }
+            extract = true;
+
+            StringBuilder builder = new StringBuilder();
+            BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(htmlFile.toFile()), StandardCharsets.UTF_8));
+            reader.lines().forEach(line -> builder.append(line).append('\n'));
+            htmlText = builder.toString();
+        } catch (Throwable e) {
+            if (extract) manager.console(ChatColor.RED + "Html mail file for " + lang + " load exception !!!");
+            else manager.console(ChatColor.RED + "Html mail file for " + lang + " extract exception !!!");
+            if (manager.isDebug()) e.printStackTrace();
+        }
     }
 
     public void sendResetEmail(Account target, Player player) {
-        String password = Rand.randString(8);
+
+        String pswd = Rand.randString(8);
 
         // TODO check setProperty & put
         Properties properties = new Properties();
@@ -67,14 +93,18 @@ public class Email {
             //sender email with an alias
             message.setFrom(new InternetAddress(account, senderName));
             message.setRecipient(Message.RecipientType.TO, new InternetAddress(target.getEmail(), target.username()));
-            message.setSubject(replace(subject, player, password));
+            // TODO check whether html can overwrite subject
+            message.setSubject(manager.trans("email.subject").replace("%player%", player.getName()));
 
             //current time
             message.setSentDate(new Date());
 
-            String htmlContent = replace(text, player, password);
             //allow html
-            message.setContent(htmlContent, "text/html;charset=utf-8");
+            message.setContent(
+                    htmlText.replace("%player%", player.getName())
+                            .replace("%password%", pswd),
+                    "text/html;charset=utf-8"
+            );
             //we only need to send the message so we use smtp
             Transport transport = session.getTransport("smtp");
             //send email
@@ -93,16 +123,12 @@ public class Email {
                 }
             }).submit(manager.getPlugin());
             //set new password here if the email sending fails fails we have still the old password
-            target.setPassword(password);
+            target.setPassword(pswd);
             Task.builder().async().execute(() -> manager.saveAccount(target)).submit(manager.getPlugin());
         } catch (Throwable e) {
             if (manager.isDebug()) e.printStackTrace();
             manager.consoleKey("sendMailException");
             manager.sendKey(player, "sendMailFailed");
         }
-    }
-
-    private static String replace(String text, Player player, String password) {
-        return text.replace("%player%", player.getName()).replace("%password%", password);
     }
 }
