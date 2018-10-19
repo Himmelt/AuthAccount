@@ -22,7 +22,7 @@ public class LoginTask implements Runnable {
 
     @Override
     public void run() {
-        Account account = manager.loadAccount(player.getUniqueId());
+        Account account = manager.queryAccount(player.getUniqueId());
         if (account == null) {
             manager.sendKey(player, "AccountNotFound");
             return;

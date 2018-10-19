@@ -19,8 +19,8 @@ public class LoginMessageTask implements Consumer<Task> {
 
     @Override
     public void accept(Task task) {
-        Account account = manager.getAccountIfPresent(player);
-        if (account != null && account.isOnline()) {
+        Account account = manager.getAccount(player);
+        if (account != null && account.offline()) {
             task.cancel();
             return;
         }

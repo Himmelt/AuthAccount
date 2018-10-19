@@ -14,6 +14,7 @@ import org.spongepowered.api.data.persistence.InvalidDataException;
 import org.spongepowered.api.data.value.BaseValue;
 import org.spongepowered.api.data.value.immutable.ImmutableValue;
 import org.spongepowered.api.entity.living.player.Player;
+import org.spongepowered.api.entity.living.player.User;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -28,20 +29,21 @@ import static org.soraworld.account.util.Hash.hash;
 
 public class Account implements DataManipulator<Account, Account.Immutable> {
 
-    public int uid = -1;
     private UUID uuid;
     private String ip;
     private String email;
     private String username;
     private String password;
     // TODO multiple servers online status
-    private boolean online;
+    private boolean online = false;
+    private boolean registered = false;
     private Timestamp timestamp;
 
     private static final DataQuery IP = DataQuery.of("ip");
-    private static final DataQuery UID = DataQuery.of("uid");
+    private static final DataQuery REGISTERED = DataQuery.of("registered");
     private static final DataQuery UUID = DataQuery.of("uuid");
     private static final DataQuery EMAIL = DataQuery.of("email");
+    private static final DataQuery TIME = DataQuery.of("timestamp");
     private static final DataQuery PASSWORD = DataQuery.of("password");
 
     public Account(Player player, String password) {
@@ -51,26 +53,24 @@ public class Account implements DataManipulator<Account, Account.Immutable> {
 
     //new account
     public Account(UUID uuid, String username, String password, String ip) {
+        this.ip = ip;
         this.uuid = uuid;
         this.username = username;
         this.password = hash(password);
-        this.ip = ip;
         this.timestamp = new Timestamp(System.currentTimeMillis());
     }
 
     //existing account
     public Account(ResultSet resultSet) throws SQLException {
         //uuid in string format
-        this.uid = resultSet.getInt(0);
-        this.uuid = java.util.UUID.fromString(resultSet.getString(2));
-        this.username = resultSet.getString(3);
+        this.registered = true;
         this.password = resultSet.getString(4);
         this.ip = resultSet.getString(5);
         this.timestamp = resultSet.getTimestamp(6);
         this.email = resultSet.getString(7);
     }
 
-    public Account(Account other) {
+    public Account(Account account) {
 
     }
 
@@ -80,6 +80,16 @@ public class Account implements DataManipulator<Account, Account.Immutable> {
 
     public Account() {
 
+    }
+
+    public Account(User user, Account acc) {
+        this.uuid = user.getUniqueId();
+        this.username = user.getName();
+        this.password = acc.password;
+        this.email = acc.email;
+        this.registered = true;
+        this.ip = acc.ip;
+        this.timestamp = acc.timestamp;
     }
 
     public boolean checkPassword(String userInput) {
@@ -132,8 +142,8 @@ public class Account implements DataManipulator<Account, Account.Immutable> {
 
     //these methods have to thread-safe as they will be accessed
     //through Async (PlayerChatEvent/LoginTask) and sync methods
-    public synchronized boolean isOnline() {
-        return online;
+    public synchronized boolean offline() {
+        return !online;
     }
 
     public synchronized void setOnline(boolean online) {
@@ -146,7 +156,13 @@ public class Account implements DataManipulator<Account, Account.Immutable> {
         return Optional.of(this);
     }
 
-    private void reset() {
+    public void reset() {
+        registered = false;
+        online = false;
+        password = "";
+        email = "";
+        ip = "";
+        timestamp = null;
     }
 
     public Optional<Account> from(DataContainer container) {
@@ -193,17 +209,46 @@ public class Account implements DataManipulator<Account, Account.Immutable> {
     }
 
     public DataContainer toContainer() {
-        return DataContainer.createNew();
+        return DataContainer.createNew()
+                .set(EMAIL, email)
+                .set(PASSWORD, password)
+                .set(REGISTERED, registered);
     }
 
-    public void copy(Account acc) {
+    public void sync(User user, Account acc) {
+        this.uuid = user.getUniqueId();
+        this.username = user.getName();
+        this.registered = true;
+        if (acc.ip != null && !acc.ip.isEmpty()) this.ip = acc.ip;
+        if (acc.email != null && !acc.email.isEmpty()) this.email = acc.email;
+        if (acc.password != null && !acc.password.isEmpty()) this.password = acc.password;
+        if (acc.timestamp != null) this.timestamp = acc.timestamp;
+    }
 
+    public boolean isRegistered() {
+        return registered && password != null && !password.isEmpty();
+    }
+
+    public void setRegistered(boolean registered) {
+        this.registered = registered;
     }
 
     public static class Immutable implements ImmutableDataManipulator<Immutable, Account> {
 
-        public Immutable(Account account) {
+        private UUID uuid;
+        private String ip;
+        private String email;
+        private String username;
+        private String password;
+        // TODO multiple servers online status
+        private boolean online = false;
+        private Timestamp timestamp;
 
+        public Immutable(Account account) {
+            this.ip = account.ip;
+            this.email = account.email;
+            this.password = account.password;
+            this.online = account.online;
         }
 
         public Account asMutable() {

@@ -20,23 +20,23 @@ import java.util.concurrent.ConcurrentHashMap;
 @Serializable
 public class Database {
     @Setting(comment = "comment.database.enable")
-    private boolean enable = false;
+    public boolean enable = false;
     @Setting(comment = "comment.database.type")
-    private String type = "H2";
+    public String type = "H2";
     @Setting(comment = "comment.database.host")
-    private String host = "%path%";
+    public String host = "%path%";
     @Setting(comment = "comment.database.port")
-    private int port = 3306;
+    public int port = 3306;
     @Setting(comment = "comment.database.name")
-    private String name = "sponge";
+    public String name = "sponge";
     @Setting(comment = "comment.database.table")
-    private String table = "accounts";
+    public String table = "accounts";
     @Setting(comment = "comment.database.username")
-    private String username = "";
+    public String username = "";
     @Setting(comment = "comment.database.password")
-    private String password = "";
+    public String password = "";
     @Setting(comment = "comment.database.useSSL")
-    private boolean useSSL = false;
+    public boolean useSSL = false;
 
     private SqlService sql;
     private String jdbcURL;
@@ -78,7 +78,7 @@ public class Database {
 
     public boolean isOnline(Player player) {
         Account account = getAccount(player);
-        return account != null && account.isOnline();
+        return account != null && account.offline();
     }
 
     public void createTable() {
@@ -201,7 +201,7 @@ public class Database {
         return cache.remove(player.getUniqueId());
     }
 
-    public Account loadAccount(UUID uuid) {
+    public Account queryAccount(UUID uuid) {
         Account loadedAccount = null;
         Connection conn = null;
         try {
@@ -224,7 +224,7 @@ public class Database {
         return loadedAccount;
     }
 
-    public Account loadAccount(String playerName) {
+    public Account queryAccount(String playerName) {
         Connection conn = null;
         try {
             conn = getConnection();
@@ -370,5 +370,9 @@ public class Database {
         } finally {
             closeQuietly(conn);
         }
+    }
+
+    public void setOffline(UUID uuid) {
+
     }
 }

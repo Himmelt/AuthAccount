@@ -5,6 +5,7 @@ import org.soraworld.account.config.Email;
 import org.soraworld.account.config.General;
 import org.soraworld.account.config.Spawn;
 import org.soraworld.account.data.Account;
+import org.soraworld.account.serializer.PatternSerializer;
 import org.soraworld.hocon.node.Setting;
 import org.soraworld.violet.manager.SpongeManager;
 import org.soraworld.violet.plugin.SpongePlugin;
@@ -38,6 +39,7 @@ public class AccountManager extends SpongeManager {
 
     public AccountManager(SpongePlugin plugin, Path path) {
         super(plugin, path);
+        this.options.registerType(new PatternSerializer());
         this.general = new General();
         this.database = new Database(this, path);
         this.email = new Email(this, path);
@@ -64,7 +66,7 @@ public class AccountManager extends SpongeManager {
         database.createTable();
         Sponge.getServer().getOnlinePlayers().forEach(player -> {
             protect(player);
-            database.loadAccount(player.getUniqueId());
+            database.queryAccount(player.getUniqueId());
         });
     }
 
@@ -169,7 +171,7 @@ public class AccountManager extends SpongeManager {
         }
     }
 
-    public Account getAccountIfPresent(Player player) {
+    public Account getAccount(Player player) {
         return database.getAccount(player);
     }
 
@@ -177,12 +179,12 @@ public class AccountManager extends SpongeManager {
         return database.save(account);
     }
 
-    public Account loadAccount(UUID uuid) {
-        return database.loadAccount(uuid);
+    public Account queryAccount(UUID uuid) {
+        return database.queryAccount(uuid);
     }
 
-    public Account loadAccount(String name) {
-        return database.loadAccount(name);
+    public Account queryAccount(String name) {
+        return database.queryAccount(name);
     }
 
     public void flushLoginStatus(Account account, boolean online) {
@@ -219,5 +221,17 @@ public class AccountManager extends SpongeManager {
 
     public int waitTime() {
         return general.waitTime;
+    }
+
+    public boolean legalName(String name) {
+        return name != null && !general.banNames.contains(name) && general.nameRegex.matcher(name).matches();
+    }
+
+    public boolean enableDB() {
+        return database.enable;
+    }
+
+    public void setOffline(UUID uuid) {
+        database.setOffline(uuid);
     }
 }

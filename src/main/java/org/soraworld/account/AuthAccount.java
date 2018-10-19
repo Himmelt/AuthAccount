@@ -10,13 +10,11 @@ import org.soraworld.violet.command.SpongeBaseSubs;
 import org.soraworld.violet.command.SpongeCommand;
 import org.soraworld.violet.manager.SpongeManager;
 import org.soraworld.violet.plugin.SpongePlugin;
-import org.spongepowered.api.Sponge;
 import org.spongepowered.api.data.DataRegistration;
 import org.spongepowered.api.event.Listener;
 import org.spongepowered.api.event.game.state.GameInitializationEvent;
 import org.spongepowered.api.plugin.Dependency;
 import org.spongepowered.api.plugin.Plugin;
-import org.spongepowered.api.service.user.UserStorageService;
 
 import java.nio.file.Path;
 import java.util.Collections;
@@ -57,12 +55,7 @@ public class AuthAccount extends SpongePlugin {
     }
 
     protected List<Object> registerListeners() {
-        UserStorageService service = Sponge.getServiceManager().provide(UserStorageService.class).orElse(null);
-        if (service != null) return Collections.singletonList(new EventListener((AccountManager) manager, service));
-        else {
-            manager.consoleKey("invalidStorageService");
-            return Collections.emptyList();
-        }
+        return Collections.singletonList(new EventListener((AccountManager) manager));
     }
 
     protected void registerCommands() {

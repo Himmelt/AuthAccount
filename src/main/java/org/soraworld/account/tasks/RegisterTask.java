@@ -19,7 +19,7 @@ public class RegisterTask implements Runnable {
     }
 
     public void run() {
-        if (manager.loadAccount(player.getUniqueId()) == null) {
+        if (manager.queryAccount(player.getUniqueId()) == null) {
             int regByIp = manager.getRegistrationsCount(IPUtil.getPlayerIP(player));
             if (manager.getMaxIpReg() >= 1 && regByIp >= manager.getMaxIpReg()) {
                 manager.sendKey(player, "MaxIpRegMessage");
