@@ -78,7 +78,7 @@ public class Database {
 
     public boolean isOnline(Player player) {
         Account account = getAccount(player);
-        return account != null && account.offline();
+        return account != null && !account.offline();
     }
 
     public void createTable() {

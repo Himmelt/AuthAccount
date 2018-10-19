@@ -21,7 +21,7 @@ public class CommandLogin extends SpongeCommand {
 
     public void execute(Player player, Args args) {
         Account account = manager.getAccount(player);
-        if (account != null && account.offline()) {
+        if (account != null && !account.offline()) {
             manager.sendKey(player, "AlreadyLoggedInMessage");
             return;
         }

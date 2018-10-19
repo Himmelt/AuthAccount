@@ -75,7 +75,7 @@ public final class CommandAccount {
         AccountManager manager = (AccountManager) self.manager;
         Account account = manager.getAccount(player);
 
-        if (account != null && account.offline()) {
+        if (account != null && !account.offline()) {
             if (args.size() == 3) {
                 if (account.checkPassword(args.first())) {
                     // TODO password format check
@@ -109,7 +109,7 @@ public final class CommandAccount {
         AccountManager manager = (AccountManager) self.manager;
         Account account = manager.getAccount(player);
         if (account != null) {
-            if (!account.offline()) {
+            if (account.offline()) {
                 String email = account.getEmail();
                 if (email != null && !email.isEmpty()) {
                     manager.sendResetEmail(account, player);
