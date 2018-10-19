@@ -30,11 +30,11 @@ public class LoginTask implements Runnable {
 
         try {
             Integer attempts = manager.getAttempts().computeIfAbsent(player.getName(), (playerName) -> 0);
-            if (attempts > manager.general.maxAttempts) {
+            if (attempts > manager.maxAttempts()) {
                 manager.sendKey(player, "MaxAttemptsMessage");
                 // TODO CoolDown Input
                 Sponge.getScheduler().createTaskBuilder()
-                        .delay(manager.general.waitTime, TimeUnit.SECONDS)
+                        .delay(manager.waitTime(), TimeUnit.SECONDS)
                         .execute(() -> manager.getAttempts().remove(player.getName())).submit(manager);
                 return;
             }
@@ -51,7 +51,7 @@ public class LoginTask implements Runnable {
 
                 //flushes the ip update
                 manager.saveAccount(account);
-                if (manager.general.updateLoginStatus) {
+                if (manager.updateLoginStatus()) {
                     manager.flushLoginStatus(account, true);
                 }
             } else {

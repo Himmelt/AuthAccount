@@ -21,7 +21,7 @@ public class RegisterTask implements Runnable {
     public void run() {
         if (manager.loadAccount(player.getUniqueId()) == null) {
             int regByIp = manager.getRegistrationsCount(IPUtil.getPlayerIP(player));
-            if (manager.general.maxIpReg >= 1 && regByIp >= manager.general.maxIpReg) {
+            if (manager.getMaxIpReg() >= 1 && regByIp >= manager.getMaxIpReg()) {
                 manager.sendKey(player, "MaxIpRegMessage");
                 return;
             }
@@ -33,7 +33,7 @@ public class RegisterTask implements Runnable {
                 }
                 manager.sendKey(player, "AccountCreated");
                 account.setOnline(true);
-                if (manager.general.updateLoginStatus) {
+                if (manager.updateLoginStatus()) {
                     manager.flushLoginStatus(account, true);
                 }
 

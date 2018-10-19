@@ -1,8 +1,9 @@
-package org.soraworld.account.manager;
+package org.soraworld.account.config;
 
 import com.google.common.primitives.Bytes;
 import com.google.common.primitives.Longs;
 import org.soraworld.account.data.Account;
+import org.soraworld.account.manager.AccountManager;
 import org.soraworld.hocon.node.Serializable;
 import org.soraworld.hocon.node.Setting;
 import org.soraworld.violet.util.ChatColor;

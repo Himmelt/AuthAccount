@@ -1,4 +1,4 @@
-package org.soraworld.account.manager;
+package org.soraworld.account.config;
 
 import org.soraworld.hocon.node.Serializable;
 import org.soraworld.hocon.node.Setting;
@@ -7,8 +7,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 
 @Serializable
-public
-class GeneralSetting {
+public class General {
+
+    // TODO private
 
     @Setting(comment = "Should the plugin login users automatically if it's the same account from the same IP")
     public boolean ipAutoLogin = false;

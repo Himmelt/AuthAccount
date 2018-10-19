@@ -1,7 +1,10 @@
 package org.soraworld.account.manager;
 
+import org.soraworld.account.config.Database;
+import org.soraworld.account.config.Email;
+import org.soraworld.account.config.General;
+import org.soraworld.account.config.Spawn;
 import org.soraworld.account.data.Account;
-import org.soraworld.account.util.Rand;
 import org.soraworld.hocon.node.Setting;
 import org.soraworld.violet.manager.SpongeManager;
 import org.soraworld.violet.plugin.SpongePlugin;
@@ -9,28 +12,24 @@ import org.soraworld.violet.util.ChatColor;
 import org.spongepowered.api.Sponge;
 import org.spongepowered.api.data.manipulator.mutable.entity.MovementSpeedData;
 import org.spongepowered.api.entity.living.player.Player;
-import org.spongepowered.api.scheduler.Task;
 import org.spongepowered.api.world.Location;
 import org.spongepowered.api.world.World;
 
-import javax.mail.Message;
-import javax.mail.Session;
-import javax.mail.Transport;
-import javax.mail.internet.InternetAddress;
-import javax.mail.internet.MimeMessage;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
 
 public class AccountManager extends SpongeManager {
 
     @Setting(comment = "comment.general")
-    public final GeneralSetting general;
-    @Setting(comment = "comment.spawn")
-    public final SpawnSetting spawn;
+    private final General general;
     @Setting(path = "database", comment = "comment.database")
     private final Database database;
     @Setting(comment = "comment.email")
-    public final EmailSetting emailSetting;
+    private final Email email;
+    @Setting(comment = "comment.spawn")
+    private final Spawn spawn;
 
     private final HashMap<UUID, Location<World>> oldLocations = new HashMap<>();
 
@@ -39,10 +38,10 @@ public class AccountManager extends SpongeManager {
 
     public AccountManager(SpongePlugin plugin, Path path) {
         super(plugin, path);
-        this.general = new GeneralSetting();
-        this.spawn = new SpawnSetting();
+        this.general = new General();
         this.database = new Database(this, path);
-        this.emailSetting = new EmailSetting();
+        this.email = new Email(this);
+        this.spawn = new Spawn();
     }
 
     public ChatColor defChatColor() {
@@ -104,61 +103,7 @@ public class AccountManager extends SpongeManager {
     }
 
     public void sendResetEmail(Account account, Player player) {
-        String password = Rand.randString(8);
-
-        // TODO check setProperty & put
-        Properties properties = new Properties();
-        properties.setProperty("mail.smtp.host", emailSetting.getHost());
-        properties.put("mail.smtp.auth", "true");
-        properties.put("mail.smtp.port", emailSetting.getPort());
-        properties.put("mail.smtp.starttls.enable", true);
-
-        Session session = Session.getDefaultInstance(properties);
-
-        //prepare email
-        MimeMessage message = new MimeMessage(session);
-        try {
-            String YuiAccount = emailSetting.getAccount();
-            //sender email with an alias
-            message.setFrom(new InternetAddress(YuiAccount, emailSetting.getSenderName()));
-            message.setRecipient(Message.RecipientType.TO, new InternetAddress(account.getEmail(), account.username()));
-            message.setSubject(replace(emailSetting.getSubject(), player, password));
-
-            //current time
-            message.setSentDate(new Date());
-
-            String htmlContent = replace(emailSetting.getText(), player, password);
-            //allow html
-            message.setContent(htmlContent, "text/html;charset=utf-8");
-            //we only need to send the message so we use smtp
-            Transport transport = session.getTransport("smtp");
-            //send email
-            Task.builder().async().execute(() -> {
-                try {
-                    //connect to host and send message
-                    if (!transport.isConnected()) {
-                        transport.connect(emailSetting.getHost(), emailSetting.getAccount(), emailSetting.getPassword());
-                    }
-                    transport.sendMessage(message, message.getAllRecipients());
-                    sendKey(player, "RecoveryEmailSent");
-                } catch (Exception e) {
-                    if (debug) e.printStackTrace();
-                    consoleKey("sendMailException");
-                    sendKey(player, "sendMailFailed");
-                }
-            }).submit(plugin);
-            //set new password here if the email sending fails fails we have still the old password
-            account.setPassword(password);
-            Task.builder().async().execute(() -> database.save(account)).submit(plugin);
-        } catch (Throwable e) {
-            if (debug) e.printStackTrace();
-            consoleKey("sendMailException");
-            sendKey(player, "sendMailFailed");
-        }
-    }
-
-    private static String replace(String text, Player player, String password) {
-        return text.replace("%player%", player.getName()).replace("%password%", password);
+        email.sendResetEmail(account, player);
     }
 
     public Map<String, Integer> getAttempts() {
@@ -252,5 +197,21 @@ public class AccountManager extends SpongeManager {
 
     public Account deleteAccount(String name) {
         return database.deleteAccount(name);
+    }
+
+    public int getMaxIpReg() {
+        return general.maxIpReg;
+    }
+
+    public boolean updateLoginStatus() {
+        return general.updateLoginStatus;
+    }
+
+    public int maxAttempts() {
+        return general.maxAttempts;
+    }
+
+    public int waitTime() {
+        return general.waitTime;
     }
 }

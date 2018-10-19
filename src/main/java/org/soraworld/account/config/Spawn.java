@@ -1,4 +1,4 @@
-package org.soraworld.account.manager;
+package org.soraworld.account.config;
 
 import org.soraworld.hocon.node.Serializable;
 import org.soraworld.hocon.node.Setting;
@@ -9,7 +9,8 @@ import org.spongepowered.api.world.World;
 import java.util.Optional;
 
 @Serializable
-class SpawnSetting {
+public class Spawn {
+    // TODO private
     @Setting
     public boolean enabled;
     @Setting(comment = "Should the plugin use the default spawn from the world you specify below")
