@@ -35,6 +35,7 @@ public class EventListener {
     public void onPlayerAuth(ClientConnectionEvent.Auth event) {
         final UUID uuid = event.getProfile().getUniqueId();
         // TODO check illegal username
+        // TODO issue #2
         String name = event.getProfile().getName().orElse(null);
         if (name != null && !name.isEmpty()) {
             if (USERNAME.matcher(name).matches()) {

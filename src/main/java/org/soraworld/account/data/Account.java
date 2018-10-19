@@ -34,6 +34,7 @@ public class Account implements DataManipulator<Account, Account.Immutable> {
     private String email;
     private String username;
     private String password;
+    // TODO multiple servers online status
     private boolean online;
     private Timestamp timestamp;
 
