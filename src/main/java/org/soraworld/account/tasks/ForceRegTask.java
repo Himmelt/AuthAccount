@@ -22,7 +22,7 @@ public class ForceRegTask implements Runnable {
     }
 
     public void run() {
-        Account account = manager.queryAccount(accountIndentifer);
+        Account account = manager.pullAccount(accountIndentifer);
 
         if (account == null) {
             try {

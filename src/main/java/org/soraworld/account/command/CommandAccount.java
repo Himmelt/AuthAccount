@@ -67,7 +67,7 @@ public final class CommandAccount {
                     if (E_MAIL.matcher(mail).matches()) {
                         account.setEmail(mail);
                         manager.sendKey(player, "setEmail", mail);
-                        Task.builder().async().execute(() -> manager.saveAccount(account)).submit(manager.getPlugin());
+                        Task.builder().async().execute(() -> manager.pushAccount(account)).submit(manager.getPlugin());
                     } else manager.sendKey(player, "invalidEmail");
                 } else manager.sendKey(player, "getEmail", account.getEmail());
             } else manager.sendKey(player, "pleaseLogin");
@@ -94,7 +94,7 @@ public final class CommandAccount {
                                         .name("Register Query")
                                         .execute(() -> {
                                             account.setPassword(password);
-                                            if (manager.saveAccount(account)) {
+                                            if (manager.pushAccount(account)) {
                                                 manager.sendKey(player, "ChangePasswordMessage");
                                             } else manager.sendKey(player, "ErrorCommandMessage");
                                         }).submit(manager.getPlugin());

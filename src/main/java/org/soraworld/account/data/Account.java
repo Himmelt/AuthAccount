@@ -227,6 +227,7 @@ public class Account implements DataManipulator<Account, Account.Immutable> {
         this.uuid = user.getUniqueId();
         this.username = user.getName();
         this.registered = true;
+        this.online = acc.online;
         if (acc.ip != null && !acc.ip.isEmpty()) this.ip = acc.ip;
         if (acc.email != null && !acc.email.isEmpty()) this.email = acc.email;
         if (acc.password != null && !acc.password.isEmpty()) this.password = acc.password;
@@ -239,6 +240,10 @@ public class Account implements DataManipulator<Account, Account.Immutable> {
 
     public void setRegistered(boolean registered) {
         this.registered = registered;
+    }
+
+    public void setUUID(UUID uuid) {
+        this.uuid = uuid;
     }
 
     public static class Immutable implements ImmutableDataManipulator<Immutable, Account> {

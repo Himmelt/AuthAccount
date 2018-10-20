@@ -8,6 +8,8 @@ import org.spongepowered.api.entity.living.player.Player;
 
 import java.util.concurrent.TimeUnit;
 
+import static org.soraworld.account.config.Database.getAccount;
+
 public class LoginTask implements Runnable {
 
     private final Player player;
@@ -20,10 +22,12 @@ public class LoginTask implements Runnable {
         this.userInput = password;
     }
 
-    @Override
     public void run() {
-        Account account = manager.queryAccount(player.getUniqueId());
-        if (account == null) {
+        // TODO 异步 有问题
+        Account account = manager.enableDB() ? manager.pullAccount(player.getUniqueId()) : getAccount(player);
+        // TODO 验证登陆时，从 DB 拉取数据 DB --> NBT 并更新缓存
+        if (account == null || !account.isRegistered()) {
+            // TODO HINT 未注册
             manager.sendKey(player, "AccountNotFound");
             return;
         }
@@ -32,7 +36,7 @@ public class LoginTask implements Runnable {
             Integer attempts = manager.getAttempts().computeIfAbsent(player.getName(), (playerName) -> 0);
             if (attempts > manager.maxAttempts()) {
                 manager.sendKey(player, "MaxAttemptsMessage");
-                // TODO CoolDown Input
+                // TODO 超过尝试次数的冷却时间
                 Sponge.getScheduler().createTaskBuilder()
                         .delay(manager.waitTime(), TimeUnit.SECONDS)
                         .execute(() -> manager.getAttempts().remove(player.getName())).submit(manager);
@@ -40,6 +44,7 @@ public class LoginTask implements Runnable {
             }
 
             if (account.checkPassword(userInput)) {
+                // 验证通过
                 manager.getAttempts().remove(player.getName());
                 account.setOnline(true);
                 //update the ip
@@ -48,11 +53,14 @@ public class LoginTask implements Runnable {
                 Sponge.getScheduler().createTaskBuilder()
                         .execute(() -> manager.unprotect(player))
                         .submit(manager);
-
-                //flushes the ip update
-                manager.saveAccount(account);
-                if (manager.updateLoginStatus()) {
-                    manager.flushLoginStatus(account, true);
+                if (manager.enableDB()) {
+                    // DB --> NBT
+                    getAccount(player).sync(player, account);
+                    //flushes the ip update
+                    manager.pushAccount(account);
+                    if (manager.updateLoginStatus()) {
+                        manager.flushLoginStatus(account, true);
+                    }
                 }
             } else {
                 attempts++;

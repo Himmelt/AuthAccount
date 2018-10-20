@@ -10,7 +10,7 @@ import org.spongepowered.api.entity.living.player.Player;
 import org.spongepowered.api.scheduler.Task;
 import org.spongepowered.api.text.Text;
 
-import static org.soraworld.account.manager.AccountManager.getAccount;
+import static org.soraworld.account.config.Database.getAccount;
 
 public class CommandLogin extends SpongeCommand {
 
@@ -24,7 +24,7 @@ public class CommandLogin extends SpongeCommand {
     public void execute(Player player, Args args) {
         Account account = getAccount(player);
         if (account.isRegistered()) {
-            if (!account.offline()) {
+            if (account.online()) {
                 manager.sendKey(player, "AlreadyLoggedInMessage");
                 return;
             }

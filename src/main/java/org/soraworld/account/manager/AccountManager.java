@@ -182,26 +182,16 @@ public class AccountManager extends SpongeManager {
         }
     }
 
-    /**
-     * 获取玩家账户<br>
-     * 所有使用的地方都应该先用 {@link Account#isRegistered} 检查是否已注册.
-     *
-     * @param player 玩家
-     * @return 账户
-     */
-    public static Account getAccount(Player player) {
-        return player.getOrCreate(Account.class).orElse(new Account());
-    }
 
-    public boolean saveAccount(Account account) {
+    public boolean pushAccount(Account account) {
         return database.save(account);
     }
 
-    public Account queryAccount(UUID uuid) {
+    public Account pullAccount(UUID uuid) {
         return database.queryAccount(uuid);
     }
 
-    public Account queryAccount(String name) {
+    public Account pullAccount(String name) {
         return database.queryAccount(name);
     }
 
@@ -255,5 +245,9 @@ public class AccountManager extends SpongeManager {
 
     public boolean allowCommand(String command) {
         return cmdNames.contains(command) || general.allowCommands.contains(command);
+    }
+
+    public boolean shouldHide(String command) {
+        return cmdNames.contains(command);
     }
 }

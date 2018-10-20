@@ -122,7 +122,7 @@ public class Email {
             }).submit(manager.getPlugin());
             //set new password here if the email sending fails fails we have still the old password
             target.setPassword(pswd);
-            Task.builder().async().execute(() -> manager.saveAccount(target)).submit(manager.getPlugin());
+            Task.builder().async().execute(() -> manager.pushAccount(target)).submit(manager.getPlugin());
         } catch (Throwable e) {
             if (manager.isDebug()) e.printStackTrace();
             manager.consoleKey("sendMailException");

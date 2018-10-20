@@ -9,6 +9,7 @@ import org.soraworld.hocon.node.Setting;
 import org.soraworld.violet.util.ChatColor;
 import org.spongepowered.api.Sponge;
 import org.spongepowered.api.entity.living.player.Player;
+import org.spongepowered.api.entity.living.player.User;
 import org.spongepowered.api.service.sql.SqlService;
 
 import java.io.File;
@@ -73,8 +74,22 @@ public class Database {
         return sql.getDataSource(getJdbcURL()).getConnection();
     }
 
-    public Account getAccount(Player player) {
-        return cache.get(player.getUniqueId());
+    /**
+     * 获取玩家账户<br>
+     * 所有使用的地方都应该先用 {@link Account#isRegistered} 检查是否已注册.
+     *
+     * @param user 玩家
+     * @return 账户
+     */
+    public static Account getAccount(final User user) {
+        return cache.computeIfAbsent(user.getUniqueId(), uuid -> {
+            // TODO 异步不应该更新玩家数据
+            Account acc = user.getOrCreate(Account.class).orElse(new Account());
+            acc.setUUID(uuid);
+            acc.setUsername(user.getName());
+            user.offer(acc);
+            return acc;
+        });
     }
 
     public void createTable() {
@@ -198,26 +213,26 @@ public class Database {
     }
 
     public Account queryAccount(UUID uuid) {
-        Account loadedAccount = null;
+        Account account = null;
         Connection conn = null;
         try {
             conn = getConnection();
-            PreparedStatement prepareStatement = conn.prepareStatement("SELECT * FROM " + accountTable + " WHERE `uuid`=?");
+            PreparedStatement statement = conn.prepareStatement("SELECT * FROM " + accountTable + " WHERE `uuid`=?");
 
-            prepareStatement.setString(1, uuid.toString());
+            statement.setString(1, uuid.toString());
 
-            ResultSet resultSet = prepareStatement.executeQuery();
-            if (resultSet.next()) {
-                loadedAccount = new Account(resultSet);
-                cache.put(uuid, loadedAccount);
+            ResultSet result = statement.executeQuery();
+            if (result.next()) {
+                account = new Account(result);
+                //cache.put(uuid, account);
             }
-        } catch (SQLException sqlEx) {
+        } catch (SQLException e) {
             manager.console("Error loading account");
         } finally {
             closeQuietly(conn);
         }
 
-        return loadedAccount;
+        return account;
     }
 
     public Account queryAccount(String playerName) {
@@ -360,7 +375,7 @@ public class Database {
             statement.execute();
             cache.put(account.uuid(), account);
             return true;
-        } catch (SQLException ex) {
+        } catch (SQLException e) {
             manager.console("Error updating user account");
             return false;
         } finally {
