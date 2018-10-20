@@ -46,15 +46,13 @@ public class Email {
 
     private final AccountManager manager;
     private String htmlText = "New password for %player% on Minecraft server %server%: %password%";
-    private final Path root;
 
-    public Email(AccountManager manager, Path root) {
+    public Email(AccountManager manager) {
         this.manager = manager;
-        this.root = root;
     }
 
     public void loadHtml(String lang) {
-        Path htmlFile = root.resolve("mail").resolve(lang + ".html");
+        Path htmlFile = manager.getPath().resolve("mail").resolve(lang + ".html");
         boolean extract = false;
         try {
             if (Files.notExists(htmlFile)) {

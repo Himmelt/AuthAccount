@@ -5,6 +5,7 @@ import org.soraworld.hocon.node.Setting;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.regex.Pattern;
 
 @Serializable
@@ -35,4 +36,6 @@ public class General {
     public int messageInterval = 2;
     @Setting(comment = "comment.banNames")
     public ArrayList<String> banNames = new ArrayList<>(Arrays.asList("op", "server", "admin", "administrator", "notch"));
+    @Setting(comment = "comment.allowCommands")
+    public HashSet<Object> allowCommands = new HashSet<>();
 }

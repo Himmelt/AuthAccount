@@ -17,6 +17,7 @@ import org.spongepowered.api.plugin.Dependency;
 import org.spongepowered.api.plugin.Plugin;
 
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -69,5 +70,14 @@ public class AuthAccount extends SpongePlugin {
     public void beforeDisable() {
         ((AccountManager) manager).closeDatabase();
         ((AccountManager) manager).unProtectAll();
+    }
+
+    public List<String> getCommandNames() {
+        List<String> list = new ArrayList<>();
+        for (SpongeCommand command : commands) {
+            list.add(command.name);
+            list.addAll(command.getAliases());
+        }
+        return list;
     }
 }

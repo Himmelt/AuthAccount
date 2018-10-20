@@ -12,7 +12,6 @@ import org.spongepowered.api.entity.living.player.Player;
 import org.spongepowered.api.service.sql.SqlService;
 
 import java.io.File;
-import java.nio.file.Path;
 import java.sql.*;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -29,8 +28,10 @@ public class Database {
     public int port = 3306;
     @Setting(comment = "comment.database.name")
     public String name = "sponge";
-    @Setting(comment = "comment.database.table")
-    public String table = "accounts";
+    @Setting(comment = "comment.database.accountTable")
+    private String accountTable = "accounts";
+    @Setting(comment = "comment.database.statusTable")
+    private String statusTable = "statuses";
     @Setting(comment = "comment.database.username")
     public String username = "";
     @Setting(comment = "comment.database.password")
@@ -44,9 +45,9 @@ public class Database {
     private final AccountManager manager;
     private static final ConcurrentHashMap<UUID, Account> cache = new ConcurrentHashMap<>();
 
-    public Database(AccountManager manager, Path root) {
+    public Database(AccountManager manager) {
         this.manager = manager;
-        this.storage = host.replace("%path%", root.normalize().toString());
+        this.storage = host.replace("%path%", manager.getPath().normalize().toString());
     }
 
     private String getJdbcURL() {
@@ -76,11 +77,6 @@ public class Database {
         return cache.get(player.getUniqueId());
     }
 
-    public boolean isOnline(Player player) {
-        Account account = getAccount(player);
-        return account != null && !account.offline();
-    }
-
     public void createTable() {
         try {
             createTable2();
@@ -98,18 +94,18 @@ public class Database {
             try {
                 //check if the table already exists
                 Statement statement = conn.createStatement();
-                statement.execute("SELECT 1 FROM " + table);
+                statement.execute("SELECT 1 FROM " + accountTable);
                 statement.close();
 
                 tableExists = true;
             } catch (SQLException sqlEx) {
-                manager.console("Table " + table + " doesn't exist,will create it!");
+                manager.console("Table " + accountTable + " doesn't exist,will create it!");
             }
 
             if (!tableExists) {
                 if ("SQLite".equalsIgnoreCase(type)) {
                     Statement statement = conn.createStatement();
-                    statement.execute("CREATE TABLE " + table + " ( "
+                    statement.execute("CREATE TABLE " + accountTable + " ( "
                             + "`userid` INTEGER PRIMARY KEY AUTOINCREMENT, "
                             + "`uuid` char(36) NOT NULL DEFAULT '' , "
                             + "`username` char(16) NOT NULL DEFAULT '' , "
@@ -123,7 +119,7 @@ public class Database {
                     statement.close();
                 } else {
                     Statement statement = conn.createStatement();
-                    statement.execute("CREATE TABLE " + table + " ( "
+                    statement.execute("CREATE TABLE " + accountTable + " ( "
                             + "`userid` INT UNSIGNED NOT NULL AUTO_INCREMENT , "
                             + "`uuid` char(36) NOT NULL DEFAULT '' COMMENT 'UUID' , "
                             + "`username` char(16) NOT NULL DEFAULT '' COMMENT 'Username' , "
@@ -147,7 +143,7 @@ public class Database {
         try {
             conn = getConnection();
 
-            PreparedStatement statement = conn.prepareStatement("DELETE FROM " + table + " WHERE `uuid`=? OR `username`=?");
+            PreparedStatement statement = conn.prepareStatement("DELETE FROM " + accountTable + " WHERE `uuid`=? OR `username`=?");
             statement.setString(1, identity);
             statement.setString(2, identity);
             int affectedRows = statement.executeUpdate();
@@ -174,7 +170,7 @@ public class Database {
         try {
             conn = getConnection();
 
-            PreparedStatement statement = conn.prepareStatement("DELETE FROM " + table + " WHERE UUID=?");
+            PreparedStatement statement = conn.prepareStatement("DELETE FROM " + accountTable + " WHERE UUID=?");
 
             byte[] mostBytes = Longs.toByteArray(uuid.getMostSignificantBits());
             byte[] leastBytes = Longs.toByteArray(uuid.getLeastSignificantBits());
@@ -206,7 +202,7 @@ public class Database {
         Connection conn = null;
         try {
             conn = getConnection();
-            PreparedStatement prepareStatement = conn.prepareStatement("SELECT * FROM " + table + " WHERE `uuid`=?");
+            PreparedStatement prepareStatement = conn.prepareStatement("SELECT * FROM " + accountTable + " WHERE `uuid`=?");
 
             prepareStatement.setString(1, uuid.toString());
 
@@ -229,7 +225,7 @@ public class Database {
         try {
             conn = getConnection();
 
-            PreparedStatement statement = conn.prepareStatement("SELECT * FROM " + table + " WHERE Username=?");
+            PreparedStatement statement = conn.prepareStatement("SELECT * FROM " + accountTable + " WHERE Username=?");
             statement.setString(1, playerName);
 
             ResultSet resultSet = statement.executeQuery();
@@ -250,7 +246,7 @@ public class Database {
         try {
             conn = getConnection();
 
-            PreparedStatement statement = conn.prepareStatement("SELECT COUNT(*) FROM " + table + " WHERE IP=?");
+            PreparedStatement statement = conn.prepareStatement("SELECT COUNT(*) FROM " + accountTable + " WHERE IP=?");
             statement.setString(1, ip);
 
             ResultSet resultSet = statement.executeQuery();
@@ -270,7 +266,7 @@ public class Database {
         Connection conn = null;
         try {
             conn = getConnection();
-            PreparedStatement prepareStatement = conn.prepareStatement("INSERT INTO " + table
+            PreparedStatement prepareStatement = conn.prepareStatement("INSERT INTO " + accountTable
                     + " (`uuid`, `username`, `password`, `ip`, `email`, `lastLogin`) VALUES (?,?,?,?,?,?)");
 
             prepareStatement.setString(1, account.uuid().toString());
@@ -314,7 +310,7 @@ public class Database {
         try {
             conn = getConnection();
 
-            PreparedStatement prepareStatement = conn.prepareStatement("UPDATE " + table
+            PreparedStatement prepareStatement = conn.prepareStatement("UPDATE " + accountTable
                     + " SET `online`=? WHERE `uuid`=?");
 
             prepareStatement.setInt(1, online ? 1 : 0);
@@ -336,7 +332,7 @@ public class Database {
             conn = getConnection();
 
             //set all player accounts existing in the database to unlogged
-            conn.createStatement().execute("UPDATE " + table + " SET `online`=0");
+            conn.createStatement().execute("UPDATE " + accountTable + " SET `online`=0");
         } catch (SQLException ex) {
             if (manager.isDebug()) ex.printStackTrace();
             manager.console(ChatColor.RED + "Error updating user account !!");
@@ -350,7 +346,7 @@ public class Database {
         try {
             conn = getConnection();
 
-            PreparedStatement statement = conn.prepareStatement("UPDATE " + table
+            PreparedStatement statement = conn.prepareStatement("UPDATE " + accountTable
                     + " SET `username`=?, `password`=?, `ip`=?, `lastLogin`=?, `email`=? WHERE `uuid`=?");
             //username is now changeable by Mojang - so keep it up to date
             statement.setString(1, account.username());

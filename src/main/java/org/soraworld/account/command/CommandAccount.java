@@ -18,6 +18,8 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.regex.Pattern;
 
+import static org.soraworld.account.manager.AccountManager.getAccount;
+
 public final class CommandAccount {
 
     private static final Pattern E_MAIL = Pattern.compile("[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\\.[a-zA-Z0-9-.]+");
@@ -45,7 +47,7 @@ public final class CommandAccount {
 
     @Sub(onlyPlayer = true, aliases = {"unreg"}, usage = "/account unregister <password>")
     public static void unregister(SpongeCommand self, CommandSource sender, Args args) {
-
+        // TODO 需要登陆
     }
 
     @Sub(onlyPlayer = true, aliases = {"l", "log"}, usage = "/account login <password>")
@@ -57,65 +59,69 @@ public final class CommandAccount {
     public static void email(SpongeCommand self, CommandSource sender, Args args) {
         Player player = (Player) sender;
         AccountManager manager = (AccountManager) self.manager;
-        Account account = manager.getAccount(player);
-
-        if (args.notEmpty()) {
-            String mail = args.first();
-            if (E_MAIL.matcher(mail).matches()) {
-                account.setEmail(mail);
-                manager.sendKey(player, "setEmail", mail);
-                Task.builder().async().execute(() -> manager.saveAccount(account)).submit(manager.getPlugin());
-            } else manager.sendKey(player, "invalidEmail");
-        } else manager.sendKey(player, "getEmail", account.getEmail());
+        Account account = getAccount(player);
+        if (account.isRegistered()) {
+            if (account.online()) {
+                if (args.notEmpty()) {
+                    String mail = args.first();
+                    if (E_MAIL.matcher(mail).matches()) {
+                        account.setEmail(mail);
+                        manager.sendKey(player, "setEmail", mail);
+                        Task.builder().async().execute(() -> manager.saveAccount(account)).submit(manager.getPlugin());
+                    } else manager.sendKey(player, "invalidEmail");
+                } else manager.sendKey(player, "getEmail", account.getEmail());
+            } else manager.sendKey(player, "pleaseLogin");
+        } else manager.sendKey(player, "accountNotRegister");
     }
 
     @Sub(onlyPlayer = true, aliases = {"change", "changepswd"}, usage = "/account changepswd <old> <new> <new>")
     public static void changepassword(SpongeCommand self, CommandSource sender, Args args) {
         Player player = (Player) sender;
         AccountManager manager = (AccountManager) self.manager;
-        Account account = manager.getAccount(player);
-
-        if (account != null && !account.offline()) {
-            if (args.size() == 3) {
-                if (account.checkPassword(args.first())) {
-                    // TODO password format check
-                    String password = args.get(1);
-                    if (!password.isEmpty() && password.equals(args.get(2))) {
-                        try {
-                            //Check if the first two passwords are equal to prevent typos
-                            Sponge.getScheduler().createTaskBuilder()
-                                    //we are executing a SQL Query which is blocking
-                                    .async()
-                                    .name("Register Query")
-                                    .execute(() -> {
-                                        account.setPassword(password);
-                                        if (manager.saveAccount(account)) {
-                                            manager.sendKey(player, "ChangePasswordMessage");
-                                        } else manager.sendKey(player, "ErrorCommandMessage");
-                                    }).submit(manager.getPlugin());
-                        } catch (Exception e) {
-                            if (manager.isDebug()) e.printStackTrace();
-                            manager.consoleKey("ErrorCommandMessage");
-                        }
-                    } else manager.sendKey(player, "UnequalPasswordsMessage");
-                } else manager.sendKey(player, "wrongOldPswd");
-            } else manager.sendKey(player, "invalidArgs");
-        } else manager.sendKey(player, "NotLoggedInMessage");
+        Account account = getAccount(player);
+        if (account.isRegistered()) {
+            if (account.online()) {
+                if (args.size() == 3) {
+                    if (account.checkPassword(args.first())) {
+                        // TODO password format check
+                        String password = args.get(1);
+                        if (!password.isEmpty() && password.equals(args.get(2))) {
+                            try {
+                                //Check if the first two passwords are equal to prevent typos
+                                Sponge.getScheduler().createTaskBuilder()
+                                        //we are executing a SQL Query which is blocking
+                                        .async()
+                                        .name("Register Query")
+                                        .execute(() -> {
+                                            account.setPassword(password);
+                                            if (manager.saveAccount(account)) {
+                                                manager.sendKey(player, "ChangePasswordMessage");
+                                            } else manager.sendKey(player, "ErrorCommandMessage");
+                                        }).submit(manager.getPlugin());
+                            } catch (Exception e) {
+                                if (manager.isDebug()) e.printStackTrace();
+                                manager.consoleKey("ErrorCommandMessage");
+                            }
+                        } else manager.sendKey(player, "UnequalPasswordsMessage");
+                    } else manager.sendKey(player, "wrongOldPswd");
+                } else manager.sendKey(player, "invalidArgs");
+            } else manager.sendKey(player, "pleaseLogin");
+        } else manager.sendKey(player, "accountNotRegister");
     }
 
     @Sub(onlyPlayer = true, aliases = {"forgot", "forgotpswd"}, usage = "/account forgotpassword")
     public static void forgotpassword(SpongeCommand self, CommandSource sender, Args args) {
         Player player = (Player) sender;
         AccountManager manager = (AccountManager) self.manager;
-        Account account = manager.getAccount(player);
-        if (account != null) {
+        Account account = getAccount(player);
+        if (account.isRegistered()) {
             if (account.offline()) {
                 String email = account.getEmail();
                 if (email != null && !email.isEmpty()) {
                     manager.sendResetEmail(account, player);
                 } else manager.sendKey(player, "UncommittedEmailAddressMessage");
             } else manager.sendKey(player, "AlreadyLoggedInMessage");
-        } else manager.sendKey(player, "AccountNotLoadedMessage");
+        } else manager.sendKey(player, "accountNotRegister");
     }
 
     /* admin commands */
@@ -123,6 +129,8 @@ public final class CommandAccount {
     @Sub(path = "admin.register", perm = "admin", aliases = {"reg"}, usage = "/account admin reg <account> <password>")
     public static void admin_register(SpongeCommand self, CommandSource sender, Args args) {
         AccountManager manager = (AccountManager) self.manager;
+
+        if (!checkOnline(manager, sender)) return;
 
         if (args.size() == 2) {
             String text = args.first();
@@ -156,6 +164,7 @@ public final class CommandAccount {
     @Sub(path = "admin.unregister", perm = "admin", aliases = {"unreg"}, usage = "/account admin unreg <account> [confirm]")
     public static void admin_unregister(SpongeCommand self, CommandSource sender, Args args) {
         AccountManager manager = (AccountManager) self.manager;
+        if (!checkOnline(manager, sender)) return;
         if (args.notEmpty()) {
             String text = args.first();
             try {
@@ -180,6 +189,7 @@ public final class CommandAccount {
     @Sub(path = "admin.resetpassword", perm = "admin", aliases = {"reset", "resetpswd"}, usage = "/account admin resetpswd <account> <password>")
     public static void resetpassword(SpongeCommand self, CommandSource sender, Args args) {
         AccountManager manager = (AccountManager) self.manager;
+        if (!checkOnline(manager, sender)) return;
         if (args.size() == 2) {
             String text = args.first();
             String pswd = args.get(1);
@@ -188,8 +198,8 @@ public final class CommandAccount {
                 //check if the account is an UUID
                 Optional<Player> player = Sponge.getServer().getPlayer(uuid);
                 if (player.isPresent()) {
-                    Account account = manager.getAccount(player.get());
-                    if (account == null) {
+                    Account account = getAccount(player.get());
+                    if (!account.isRegistered()) {
                         manager.sendKey(sender, "AccountNotFound");
                     } else {
                         try {
@@ -206,8 +216,8 @@ public final class CommandAccount {
             } catch (Throwable e) {
                 Optional<Player> player = Sponge.getServer().getPlayer(text);
                 if (player.isPresent()) {
-                    Account account = manager.getAccount(player.get());
-                    if (account == null) {
+                    Account account = getAccount(player.get());
+                    if (!account.isRegistered()) {
                         manager.sendKey(sender, "AccountNotFound");
                     } else {
                         try {
@@ -223,5 +233,21 @@ public final class CommandAccount {
                 }
             }
         } else manager.sendKey(sender, "invalidArgs");
+    }
+
+    private static boolean checkOnline(AccountManager manager, CommandSource sender) {
+        if (sender instanceof Player) {
+            Player player = (Player) sender;
+            Account account = getAccount(player);
+            if (!account.isRegistered()) {
+                manager.sendKey(player, "accountNotRegister");
+                return false;
+            }
+            if (account.offline()) {
+                manager.sendKey(player, "pleaseLogin");
+                return false;
+            }
+        }
+        return true;
     }
 }

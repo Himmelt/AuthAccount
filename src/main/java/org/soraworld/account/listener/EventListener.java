@@ -6,10 +6,12 @@ import org.spongepowered.api.Sponge;
 import org.spongepowered.api.entity.living.player.Player;
 import org.spongepowered.api.entity.living.player.User;
 import org.spongepowered.api.event.Listener;
+import org.spongepowered.api.event.Order;
 import org.spongepowered.api.event.command.SendCommandEvent;
 import org.spongepowered.api.event.filter.cause.First;
 import org.spongepowered.api.event.item.inventory.ClickInventoryEvent;
 import org.spongepowered.api.event.item.inventory.InteractInventoryEvent;
+import org.spongepowered.api.event.item.inventory.TargetContainerEvent;
 import org.spongepowered.api.event.message.MessageChannelEvent;
 import org.spongepowered.api.event.network.ClientConnectionEvent;
 import org.spongepowered.api.scheduler.Task;
@@ -72,7 +74,7 @@ public class EventListener {
 
     @Listener
     public void onPlayerJoin(ClientConnectionEvent.Join event, @First Player player) {
-
+        manager.protect(player);
     }
 
     @Listener
@@ -103,10 +105,10 @@ public class EventListener {
         });
     }
 
-    @Listener
+    @Listener(order = Order.FIRST, beforeModifications = true)
     public void onCommand(SendCommandEvent event, @First Player player) {
         player.getOrCreate(Account.class).ifPresent(account -> {
-            if (account.offline()) {
+            if (account.offline() || manager.allowCommand(event.getCommand())) {
                 event.setCancelled(true);
                 manager.sendKey(player, "pleaseLogin");
             }
@@ -114,16 +116,23 @@ public class EventListener {
     }
 
     @Listener
-    public void onNumberPress(ClickInventoryEvent.NumberPress event, @First Player player) {
-        player.getOrCreate(Account.class).ifPresent(account -> {
-            if (account.offline()) event.setCancelled(true);
-        });
+    public void on(TargetContainerEvent event) {
+        System.out.println(event.getClass());
     }
 
     @Listener
-    public void onOpenInventory(InteractInventoryEvent.Open event, @First Player player) {
-        player.getOrCreate(Account.class).ifPresent(account -> {
+    public void onNumberPress(ClickInventoryEvent.NumberPress event) {
+        System.out.println("onNumberPress");
+        /*player.getOrCreate(Account.class).ifPresent(account -> {
             if (account.offline()) event.setCancelled(true);
-        });
+        });*/
+    }
+
+    @Listener
+    public void onOpenInventory(InteractInventoryEvent.Open event) {
+        System.out.println("onOpenInventory");
+        /*player.getOrCreate(Account.class).ifPresent(account -> {
+            if (account.offline()) event.setCancelled(true);
+        });*/
     }
 }

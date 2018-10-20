@@ -30,10 +30,10 @@ import static org.soraworld.account.util.Hash.hash;
 public class Account implements DataManipulator<Account, Account.Immutable> {
 
     private UUID uuid;
-    private String ip;
-    private String email;
-    private String username;
-    private String password;
+    private String ip = "invalid-ip";
+    private String email = "";
+    private String username = "";
+    private String password = "";
     // TODO multiple servers online status
     private boolean online = false;
     private boolean registered = false;
@@ -146,13 +146,21 @@ public class Account implements DataManipulator<Account, Account.Immutable> {
         return !online;
     }
 
+    public synchronized boolean online() {
+        return online;
+    }
+
     public synchronized void setOnline(boolean online) {
         this.online = online;
     }
 
-    public Optional<Account> fill(DataHolder dataHolder, MergeFunction overlap) {
-        Account account = overlap.merge(this, dataHolder.get(Account.class).orElse(null));
+    public Optional<Account> fill(DataHolder holder, MergeFunction overlap) {
+        Account account = overlap.merge(this, holder.get(Account.class).orElse(null));
         // TODO copy
+        if (holder instanceof User) {
+            account.uuid = ((User) holder).getUniqueId();
+            account.username = ((User) holder).getName();
+        }
         return Optional.of(this);
     }
 
@@ -291,11 +299,18 @@ public class Account implements DataManipulator<Account, Account.Immutable> {
         }
 
         public Optional<Account> createFrom(DataHolder dataHolder) {
-            return Optional.empty();
+            return create().fill(dataHolder);
         }
 
-        public Optional<Account> build(DataView container) throws InvalidDataException {
-            return Optional.empty();
+        public Optional<Account> build(DataView con) throws InvalidDataException {
+            if (con.contains(EMAIL)) {
+                Account account = new Account();
+                con.getString(IP).ifPresent(s -> account.ip = s);
+                con.getString(EMAIL).ifPresent(s -> account.email = s);
+                con.getString(PASSWORD).ifPresent(s -> account.password = s);
+                con.getBoolean(REGISTERED).ifPresent(b -> account.registered = b);
+                return Optional.of(account);
+            } else return Optional.empty();
         }
     }
 }

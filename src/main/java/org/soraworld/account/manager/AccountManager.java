@@ -1,5 +1,6 @@
 package org.soraworld.account.manager;
 
+import org.soraworld.account.AuthAccount;
 import org.soraworld.account.config.Database;
 import org.soraworld.account.config.Email;
 import org.soraworld.account.config.General;
@@ -8,42 +9,45 @@ import org.soraworld.account.data.Account;
 import org.soraworld.account.serializer.PatternSerializer;
 import org.soraworld.hocon.node.Setting;
 import org.soraworld.violet.manager.SpongeManager;
-import org.soraworld.violet.plugin.SpongePlugin;
 import org.soraworld.violet.util.ChatColor;
 import org.spongepowered.api.Sponge;
 import org.spongepowered.api.data.manipulator.mutable.entity.MovementSpeedData;
 import org.spongepowered.api.entity.living.player.Player;
+import org.spongepowered.api.entity.living.player.gamemode.GameMode;
+import org.spongepowered.api.entity.living.player.gamemode.GameModes;
 import org.spongepowered.api.world.Location;
 import org.spongepowered.api.world.World;
 
 import java.nio.file.Path;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 
 public class AccountManager extends SpongeManager {
 
-    @Setting(comment = "comment.general")
+    @Setting(comment = "comment._general")
     private final General general;
-    @Setting(path = "database", comment = "comment.database")
+    @Setting(path = "database", comment = "comment._database")
     private final Database database;
-    @Setting(comment = "comment.email")
+    @Setting(comment = "comment._email")
     private final Email email;
-    @Setting(comment = "comment.spawn")
+    @Setting(comment = "comment._spawn")
     private final Spawn spawn;
 
+    private final List<String> cmdNames = new ArrayList<>();
     private final HashMap<UUID, Location<World>> oldLocations = new HashMap<>();
 
     private static final HashMap<UUID, Double> originWalkSpeed = new HashMap<>();
     private static final HashMap<UUID, Double> originFlySpeed = new HashMap<>();
+    private static final HashMap<UUID, GameMode> originGameMode = new HashMap<>();
 
-    public AccountManager(SpongePlugin plugin, Path path) {
+    public AccountManager(AuthAccount plugin, Path path) {
         super(plugin, path);
         this.options.registerType(new PatternSerializer());
         this.general = new General();
-        this.database = new Database(this, path);
-        this.email = new Email(this, path);
+        this.database = new Database(this);
+        this.email = new Email(this);
         this.spawn = new Spawn();
+        cmdNames.clear();
+        cmdNames.addAll(plugin.getCommandNames());
     }
 
     public boolean setLang(String lang) {
@@ -66,6 +70,7 @@ public class AccountManager extends SpongeManager {
         database.createTable();
         Sponge.getServer().getOnlinePlayers().forEach(player -> {
             protect(player);
+            // TODO 此处什么目的？？
             database.queryAccount(player.getUniqueId());
         });
     }
@@ -119,12 +124,16 @@ public class AccountManager extends SpongeManager {
     }
 
     public void protect(Player player) {
+        originGameMode.put(player.getUniqueId(), player.gameMode().get());
+        player.offer(player.gameMode().set(GameModes.SPECTATOR));
         player.getOrCreate(MovementSpeedData.class).ifPresent(speed -> {
             originWalkSpeed.put(player.getUniqueId(), speed.walkSpeed().get());
             originFlySpeed.put(player.getUniqueId(), speed.flySpeed().get());
             // TODO check negative speed
-            speed.walkSpeed().set(0.0D);
-            speed.flySpeed().set(0.0D);
+            speed.set(speed.walkSpeed().set(0.0D));
+            speed.set(speed.flySpeed().set(0.0D));
+            System.out.println(speed.walkSpeed().get());
+            System.out.println(speed.flySpeed().get());
             player.offer(speed);
         });
         if (spawn.enabled) {
@@ -150,6 +159,8 @@ public class AccountManager extends SpongeManager {
 
     public void unprotect(Player player) {
         UUID uuid = player.getUniqueId();
+        GameMode mode = originGameMode.remove(uuid);
+        player.offer(player.gameMode().set(mode != null ? mode : GameModes.CREATIVE));
         player.getOrCreate(MovementSpeedData.class).ifPresent(speed -> {
             // TODO check default value
             speed.walkSpeed().set(originWalkSpeed.getOrDefault(uuid, 0.1D));
@@ -171,8 +182,15 @@ public class AccountManager extends SpongeManager {
         }
     }
 
-    public Account getAccount(Player player) {
-        return database.getAccount(player);
+    /**
+     * 获取玩家账户<br>
+     * 所有使用的地方都应该先用 {@link Account#isRegistered} 检查是否已注册.
+     *
+     * @param player 玩家
+     * @return 账户
+     */
+    public static Account getAccount(Player player) {
+        return player.getOrCreate(Account.class).orElse(new Account());
     }
 
     public boolean saveAccount(Account account) {
@@ -233,5 +251,9 @@ public class AccountManager extends SpongeManager {
 
     public void setOffline(UUID uuid) {
         database.setOffline(uuid);
+    }
+
+    public boolean allowCommand(String command) {
+        return cmdNames.contains(command) || general.allowCommands.contains(command);
     }
 }

@@ -10,6 +10,8 @@ import org.spongepowered.api.entity.living.player.Player;
 import org.spongepowered.api.scheduler.Task;
 import org.spongepowered.api.text.Text;
 
+import static org.soraworld.account.manager.AccountManager.getAccount;
+
 public class CommandLogin extends SpongeCommand {
 
     private final AccountManager manager;
@@ -20,10 +22,12 @@ public class CommandLogin extends SpongeCommand {
     }
 
     public void execute(Player player, Args args) {
-        Account account = manager.getAccount(player);
-        if (account != null && !account.offline()) {
-            manager.sendKey(player, "AlreadyLoggedInMessage");
-            return;
+        Account account = getAccount(player);
+        if (account.isRegistered()) {
+            if (!account.offline()) {
+                manager.sendKey(player, "AlreadyLoggedInMessage");
+                return;
+            }
         }
 
         //the arg isn't optional. We can be sure there is value
