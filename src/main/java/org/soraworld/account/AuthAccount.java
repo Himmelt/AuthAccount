@@ -17,8 +17,9 @@ import org.spongepowered.api.plugin.Dependency;
 import org.spongepowered.api.plugin.Plugin;
 
 import java.nio.file.Path;
-import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 
 @Plugin(
@@ -38,6 +39,8 @@ public class AuthAccount extends SpongePlugin {
     public static final String PLUGIN_ID = "authaccount";
     public static final String PLUGIN_NAME = "AuthAccount";
     public static final String PLUGIN_VERSION = "1.0.0";
+
+    private final HashSet<String> cmdNames = new HashSet<>();
 
     @Listener
     public void onInit(GameInitializationEvent event) {
@@ -65,6 +68,12 @@ public class AuthAccount extends SpongePlugin {
         command.extractSub(CommandAccount.class);
         register(this, command);
         register(this, new CommandLogin("login", null, (AccountManager) manager, "log", "l"));
+
+        cmdNames.clear();
+        for (SpongeCommand cmd : commands) {
+            cmdNames.add(cmd.name);
+            cmdNames.addAll(cmd.getAliases());
+        }
     }
 
     public void beforeDisable() {
@@ -72,12 +81,7 @@ public class AuthAccount extends SpongePlugin {
         ((AccountManager) manager).unProtectAll();
     }
 
-    public List<String> getCommandNames() {
-        List<String> list = new ArrayList<>();
-        for (SpongeCommand command : commands) {
-            list.add(command.name);
-            list.addAll(command.getAliases());
-        }
-        return list;
+    public Collection<String> getCmdNames() {
+        return cmdNames;
     }
 }

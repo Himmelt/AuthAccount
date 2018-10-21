@@ -106,7 +106,7 @@ public class EventListener {
     @Listener(order = Order.FIRST, beforeModifications = true)
     public void onPlayerMove(MoveEntityEvent event, @First Player player) {
         // TODO 登陆之前传送至出生点不能取消
-        if (getAccount(player.getUniqueId()).offline()) event.setCancelled(true);
+        //if (getAccount(player.getUniqueId()).offline()) event.setCancelled(true);
     }
 
     @Listener(order = Order.FIRST, beforeModifications = true)
@@ -194,7 +194,7 @@ public class EventListener {
     }
 
     /* prevent log password */
-    @Listener
+    //@Listener
     public void onCommand(SendCommandEvent event) {
         if (manager.shouldHide(event.getCommand())) {
             //fake the cancelled event

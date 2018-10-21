@@ -37,5 +37,5 @@ public class General {
     @Setting(comment = "comment.banNames")
     public ArrayList<String> banNames = new ArrayList<>(Arrays.asList("op", "server", "admin", "administrator", "notch"));
     @Setting(comment = "comment.allowCommands")
-    public HashSet<Object> allowCommands = new HashSet<>();
+    public HashSet<String> allowCommands = new HashSet<>();
 }

@@ -19,7 +19,9 @@ import org.spongepowered.api.world.Location;
 import org.spongepowered.api.world.World;
 
 import java.nio.file.Path;
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class AccountManager extends SpongeManager {
@@ -33,7 +35,7 @@ public class AccountManager extends SpongeManager {
     @Setting(comment = "comment._spawn")
     private final Spawn spawn;
 
-    private final List<String> cmdNames = new ArrayList<>();
+    private final AuthAccount plugin;
     private final HashMap<UUID, Location<World>> oldLocations = new HashMap<>();
 
     private static final HashMap<UUID, Double> originWalkSpeed = new HashMap<>();
@@ -43,13 +45,12 @@ public class AccountManager extends SpongeManager {
 
     public AccountManager(AuthAccount plugin, Path path) {
         super(plugin, path);
+        this.plugin = plugin;
         this.options.registerType(new PatternSerializer());
         this.general = new General();
         this.database = new Database(this);
         this.email = new Email(this);
         this.spawn = new Spawn();
-        cmdNames.clear();
-        cmdNames.addAll(plugin.getCommandNames());
     }
 
     public boolean setLang(String lang) {
@@ -252,11 +253,11 @@ public class AccountManager extends SpongeManager {
     }
 
     public boolean allowCommand(String command) {
-        return cmdNames.contains(command) || general.allowCommands.contains(command);
+        return plugin.getCmdNames().contains(command) || general.allowCommands.contains(command);
     }
 
     public boolean shouldHide(String command) {
-        return cmdNames.contains(command);
+        return plugin.getCmdNames().contains(command);
     }
 
     /**
