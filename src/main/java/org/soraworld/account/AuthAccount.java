@@ -72,7 +72,11 @@ public class AuthAccount extends SpongePlugin {
         cmdNames.clear();
         for (SpongeCommand cmd : commands) {
             cmdNames.add(cmd.name);
-            cmdNames.addAll(cmd.getAliases());
+            cmdNames.add(getId() + ":" + cmd.name);
+            cmd.getAliases().forEach(alia -> {
+                cmdNames.add(alia);
+                cmdNames.add(getId() + ":" + alia);
+            });
         }
     }
 
