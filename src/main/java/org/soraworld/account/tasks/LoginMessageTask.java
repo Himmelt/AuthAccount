@@ -7,6 +7,8 @@ import org.spongepowered.api.scheduler.Task;
 
 import java.util.function.Consumer;
 
+import static org.soraworld.account.manager.AccountManager.getAccount;
+
 public class LoginMessageTask implements Consumer<Task> {
 
     private final AccountManager manager;
@@ -17,9 +19,8 @@ public class LoginMessageTask implements Consumer<Task> {
         this.player = player;
     }
 
-    @Override
     public void accept(Task task) {
-        Account account = manager.getAccount(player);
+        Account account = getAccount(player.getUniqueId());
         if (account != null && !account.offline()) {
             task.cancel();
             return;

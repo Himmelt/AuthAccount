@@ -8,14 +8,11 @@ import org.soraworld.hocon.node.Serializable;
 import org.soraworld.hocon.node.Setting;
 import org.soraworld.violet.util.ChatColor;
 import org.spongepowered.api.Sponge;
-import org.spongepowered.api.entity.living.player.Player;
-import org.spongepowered.api.entity.living.player.User;
 import org.spongepowered.api.service.sql.SqlService;
 
 import java.io.File;
 import java.sql.*;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
 
 @Serializable
 public class Database {
@@ -29,6 +26,8 @@ public class Database {
     public int port = 3306;
     @Setting(comment = "comment.database.name")
     public String name = "sponge";
+    @Setting(comment = "comment.database.fallBack")
+    public boolean fallBack = true;
     @Setting(comment = "comment.database.accountTable")
     private String accountTable = "accounts";
     @Setting(comment = "comment.database.statusTable")
@@ -44,7 +43,6 @@ public class Database {
     private String jdbcURL;
     private final String storage;
     private final AccountManager manager;
-    private static final ConcurrentHashMap<UUID, Account> cache = new ConcurrentHashMap<>();
 
     public Database(AccountManager manager) {
         this.manager = manager;
@@ -72,24 +70,6 @@ public class Database {
     public Connection getConnection() throws SQLException {
         if (sql == null) sql = Sponge.getServiceManager().provideUnchecked(SqlService.class);
         return sql.getDataSource(getJdbcURL()).getConnection();
-    }
-
-    /**
-     * 获取玩家账户<br>
-     * 所有使用的地方都应该先用 {@link Account#isRegistered} 检查是否已注册.
-     *
-     * @param user 玩家
-     * @return 账户
-     */
-    public static Account getAccount(final User user) {
-        return cache.computeIfAbsent(user.getUniqueId(), uuid -> {
-            // TODO 异步不应该更新玩家数据
-            Account acc = user.getOrCreate(Account.class).orElse(new Account());
-            acc.setUUID(uuid);
-            acc.setUsername(user.getName());
-            user.offer(acc);
-            return acc;
-        });
     }
 
     public void createTable() {
@@ -154,6 +134,7 @@ public class Database {
     }
 
     public Account deleteAccount(String identity) {
+        // TODO return Account
         Connection conn = null;
         try {
             conn = getConnection();
@@ -163,10 +144,6 @@ public class Database {
             statement.setString(2, identity);
             int affectedRows = statement.executeUpdate();
             //remove cache entry
-            cache.values().stream()
-                    .filter(account -> account.username().equals(identity) || account.uuid().equals(identity))
-                    .map(Account::uuid)
-                    .forEach(cache::remove);
 
             //min one account was found
             return affectedRows > 0 ? null : null;
@@ -180,7 +157,7 @@ public class Database {
     }
 
     public Account deleteAccount(UUID uuid) {
-
+        // TODO return Account
         Connection conn = null;
         try {
             conn = getConnection();
@@ -194,10 +171,7 @@ public class Database {
 
             int affectedRows = statement.executeUpdate();
             //removes the account from the cache
-            cache.remove(uuid);
-
             //min one account was found
-            //TODO
             return affectedRows > 0 ? null : null;
         } catch (SQLException sqlEx) {
             manager.console("Error deleting user account");
@@ -206,10 +180,6 @@ public class Database {
         }
 
         return null;
-    }
-
-    public Account remove(Player player) {
-        return cache.remove(player.getUniqueId());
     }
 
     public Account queryAccount(UUID uuid) {
@@ -295,10 +265,6 @@ public class Database {
 
             prepareStatement.execute();
 
-            if (shouldCache) {
-                cache.put(account.uuid(), account);
-            }
-
             return true;
         } catch (SQLException sqlEx) {
             manager.console("Error registering account");
@@ -340,12 +306,9 @@ public class Database {
     }
 
     public void close() {
-        cache.clear();
-
         Connection conn = null;
         try {
             conn = getConnection();
-
             //set all player accounts existing in the database to unlogged
             conn.createStatement().execute("UPDATE " + accountTable + " SET `online`=0");
         } catch (SQLException ex) {
@@ -373,7 +336,6 @@ public class Database {
             statement.setString(6, account.uuid().toString());
 
             statement.execute();
-            cache.put(account.uuid(), account);
             return true;
         } catch (SQLException e) {
             manager.console("Error updating user account");

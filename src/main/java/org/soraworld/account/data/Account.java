@@ -1,5 +1,6 @@
 package org.soraworld.account.data;
 
+import org.mindrot.jbcrypt.BCrypt;
 import org.soraworld.account.util.IPUtil;
 import org.spongepowered.api.data.DataContainer;
 import org.spongepowered.api.data.DataHolder;
@@ -24,7 +25,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
-import static org.soraworld.account.util.Hash.check;
 import static org.soraworld.account.util.Hash.hash;
 
 public class Account implements DataManipulator<Account, Account.Immutable> {
@@ -71,11 +71,25 @@ public class Account implements DataManipulator<Account, Account.Immutable> {
     }
 
     public Account(Account account) {
-
+        this.uuid = account.uuid;
+        this.username = account.username;
+        this.password = account.password;
+        this.registered = account.registered;
+        this.email = account.email;
+        this.ip = account.ip;
+        this.timestamp = account.timestamp;
+        this.online = account.online;
     }
 
-    public Account(Immutable other) {
-
+    public Account(Immutable account) {
+        this.uuid = account.uuid;
+        this.username = account.username;
+        this.password = account.password;
+        this.registered = account.registered;
+        this.email = account.email;
+        this.ip = account.ip;
+        this.timestamp = account.timestamp;
+        this.online = account.online;
     }
 
     public Account() {
@@ -92,8 +106,12 @@ public class Account implements DataManipulator<Account, Account.Immutable> {
         this.timestamp = acc.timestamp;
     }
 
-    public boolean checkPassword(String userInput) {
-        return check(password, userInput);
+    public Account(UUID uuid) {
+        this.uuid = uuid;
+    }
+
+    public boolean checkPassword(String password) {
+        return BCrypt.checkpw(this.password, password);
     }
 
     public UUID uuid() {
@@ -217,21 +235,22 @@ public class Account implements DataManipulator<Account, Account.Immutable> {
     }
 
     public DataContainer toContainer() {
+        // TODO 是否只有在存储数据到文件时才调用
         return DataContainer.createNew()
                 .set(EMAIL, email)
                 .set(PASSWORD, password)
                 .set(REGISTERED, registered);
     }
 
-    public void sync(User user, Account acc) {
-        this.uuid = user.getUniqueId();
-        this.username = user.getName();
-        this.registered = true;
-        this.online = acc.online;
-        if (acc.ip != null && !acc.ip.isEmpty()) this.ip = acc.ip;
-        if (acc.email != null && !acc.email.isEmpty()) this.email = acc.email;
-        if (acc.password != null && !acc.password.isEmpty()) this.password = acc.password;
-        if (acc.timestamp != null) this.timestamp = acc.timestamp;
+    public synchronized void sync(Account account) {
+        this.uuid = account.uuid;
+        this.username = account.username;
+        this.registered = account.registered;
+        this.online = account.online;
+        if (account.ip != null && !account.ip.isEmpty()) this.ip = account.ip;
+        if (account.email != null && !account.email.isEmpty()) this.email = account.email;
+        if (account.password != null && !account.password.isEmpty()) this.password = account.password;
+        if (account.timestamp != null) this.timestamp = account.timestamp;
     }
 
     public boolean isRegistered() {
@@ -249,12 +268,13 @@ public class Account implements DataManipulator<Account, Account.Immutable> {
     public static class Immutable implements ImmutableDataManipulator<Immutable, Account> {
 
         private UUID uuid;
-        private String ip;
-        private String email;
-        private String username;
-        private String password;
+        private String ip = "invalid-ip";
+        private String email = "";
+        private String username = "";
+        private String password = "";
         // TODO multiple servers online status
         private boolean online = false;
+        private boolean registered = false;
         private Timestamp timestamp;
 
         public Immutable(Account account) {

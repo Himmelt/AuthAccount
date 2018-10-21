@@ -1,6 +1,5 @@
 package org.soraworld.account.command;
 
-import org.soraworld.account.data.Account;
 import org.soraworld.account.manager.AccountManager;
 import org.soraworld.account.tasks.LoginTask;
 import org.soraworld.violet.command.Args;
@@ -10,7 +9,7 @@ import org.spongepowered.api.entity.living.player.Player;
 import org.spongepowered.api.scheduler.Task;
 import org.spongepowered.api.text.Text;
 
-import static org.soraworld.account.config.Database.getAccount;
+import static org.soraworld.account.manager.AccountManager.getAccount;
 
 public class CommandLogin extends SpongeCommand {
 
@@ -21,24 +20,14 @@ public class CommandLogin extends SpongeCommand {
         this.manager = manager;
     }
 
-    public void execute(Player player, Args args) {
-        Account account = getAccount(player);
-        if (account.isRegistered()) {
-            if (account.online()) {
-                manager.sendKey(player, "AlreadyLoggedInMessage");
-                return;
-            }
-        }
-
-        //the arg isn't optional. We can be sure there is value
-
-        Task.builder()
-                //we are executing a SQL Query which is blocking
-                .async()
-                .execute(new LoginTask(manager, player, args.first()))
-                .name("Login Query")
-                .submit(manager.getPlugin());
-
+    public void execute(final Player player, Args args) {
+        if (getAccount(player.getUniqueId()).offline()) {
+            if (args.notEmpty()) {
+                Task.builder().async().name("LoginQuery")
+                        .execute(new LoginTask(manager, player, args.first()))
+                        .submit(manager.getPlugin());
+            } else manager.sendKey(player, "emptyArgs");
+        } else manager.sendKey(player, "alreadyLoggedIn");
     }
 
     public Text getUsage(CommandSource source) {

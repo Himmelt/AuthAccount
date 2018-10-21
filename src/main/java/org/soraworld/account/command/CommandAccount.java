@@ -59,7 +59,7 @@ public final class CommandAccount {
     public static void email(SpongeCommand self, CommandSource sender, Args args) {
         Player player = (Player) sender;
         AccountManager manager = (AccountManager) self.manager;
-        Account account = getAccount(player);
+        Account account = getAccount(player.getUniqueId());
         if (account.isRegistered()) {
             if (account.online()) {
                 if (args.notEmpty()) {
@@ -78,7 +78,7 @@ public final class CommandAccount {
     public static void changepassword(SpongeCommand self, CommandSource sender, Args args) {
         Player player = (Player) sender;
         AccountManager manager = (AccountManager) self.manager;
-        Account account = getAccount(player);
+        Account account = getAccount(player.getUniqueId());
         if (account.isRegistered()) {
             if (account.online()) {
                 if (args.size() == 3) {
@@ -113,7 +113,7 @@ public final class CommandAccount {
     public static void forgotpassword(SpongeCommand self, CommandSource sender, Args args) {
         Player player = (Player) sender;
         AccountManager manager = (AccountManager) self.manager;
-        Account account = getAccount(player);
+        Account account = getAccount(player.getUniqueId());
         if (account.isRegistered()) {
             if (account.offline()) {
                 String email = account.getEmail();
@@ -198,7 +198,7 @@ public final class CommandAccount {
                 //check if the account is an UUID
                 Optional<Player> player = Sponge.getServer().getPlayer(uuid);
                 if (player.isPresent()) {
-                    Account account = getAccount(player.get());
+                    Account account = getAccount(uuid);
                     if (!account.isRegistered()) {
                         manager.sendKey(sender, "AccountNotFound");
                     } else {
@@ -216,7 +216,7 @@ public final class CommandAccount {
             } catch (Throwable e) {
                 Optional<Player> player = Sponge.getServer().getPlayer(text);
                 if (player.isPresent()) {
-                    Account account = getAccount(player.get());
+                    Account account = getAccount(player.get().getUniqueId());
                     if (!account.isRegistered()) {
                         manager.sendKey(sender, "AccountNotFound");
                     } else {
@@ -238,7 +238,7 @@ public final class CommandAccount {
     private static boolean checkOnline(AccountManager manager, CommandSource sender) {
         if (sender instanceof Player) {
             Player player = (Player) sender;
-            Account account = getAccount(player);
+            Account account = getAccount(player.getUniqueId());
             if (!account.isRegistered()) {
                 manager.sendKey(player, "accountNotRegister");
                 return false;

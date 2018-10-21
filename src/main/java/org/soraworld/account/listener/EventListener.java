@@ -26,7 +26,7 @@ import org.spongepowered.api.util.Tristate;
 import java.util.Optional;
 import java.util.UUID;
 
-import static org.soraworld.account.config.Database.getAccount;
+import static org.soraworld.account.manager.AccountManager.getAccount;
 
 public class EventListener {
 
@@ -58,20 +58,22 @@ public class EventListener {
     /* 数据同步 */
     @Listener
     public void onPlayerLogin(ClientConnectionEvent.Login event, @First User user) {
-        Account nbt = getAccount(user);// 已加入缓存，尚未从数据库同步
-        nbt.setOnline(false);
+        Account account = getAccount(user.getUniqueId());
+        account.setUsername(user.getName());
+        account.setOnline(false);
+        user.offer(account);
         // TODO 玩家第一次登陆，此时的 nbt 里的 注册状态 是 false
         // TODO 如果 数据库 里的状态是 true (管理员直接注册的)
         // TODO 此时的数据同步该怎么做
         // 本地已注册，并且已启用数据库 NBT --> DB(未注册则创建，已注册则同步 DB 没有的数据)
         // 验证登陆时，从 DB 拉取数据 DB --> NBT 并更新缓存
-        if (nbt.isRegistered() && manager.enableDB()) {
-            final UUID uuid = user.getUniqueId();
-            Task.builder().async().name("SyncDB").execute(() -> {
+        if (account.isRegistered() && manager.enableDB()) {
+            final Account nbt = account.copy();
+            Task.builder().async().name("DB->NBT").execute(() -> {
                 // 拉取 DB 数据，不存在则 null
-                Account db = manager.pullAccount(uuid);
+                Account db = manager.pullAccount(nbt.uuid());
                 if (db == null) db = new Account();
-                db.sync(user, nbt);
+                db.sync(nbt);
                 manager.pushAccount(db);
             }).submit(manager.getPlugin());
         }
@@ -104,12 +106,12 @@ public class EventListener {
     @Listener(order = Order.FIRST, beforeModifications = true)
     public void onPlayerMove(MoveEntityEvent event, @First Player player) {
         // TODO 登陆之前传送至出生点不能取消
-        if (getAccount(player).offline()) event.setCancelled(true);
+        if (getAccount(player.getUniqueId()).offline()) event.setCancelled(true);
     }
 
     @Listener(order = Order.FIRST, beforeModifications = true)
     public void onChat(MessageChannelEvent.Chat event, @First Player player) {
-        if (getAccount(player).offline()) {
+        if (getAccount(player.getUniqueId()).offline()) {
             event.setCancelled(true);
             manager.sendKey(player, "pleaseLogin");
         }
@@ -117,7 +119,8 @@ public class EventListener {
 
     @Listener(order = Order.FIRST, beforeModifications = true)
     public void onCommand(SendCommandEvent event, @First Player player) {
-        if (getAccount(player).offline() && !manager.allowCommand(event.getCommand())) {
+        if (getAccount(player.getUniqueId()).offline() && !manager.allowCommand(event.getCommand())) {
+            // TODO kill 命令在验证登陆前取消
             event.setCancelled(true);
             manager.sendKey(player, "pleaseLogin");
         }
@@ -125,69 +128,69 @@ public class EventListener {
 
     @Listener(order = Order.FIRST, beforeModifications = true)
     public void onClickInventory(ClickInventoryEvent event, @First Player player) {
-        if (getAccount(player).offline()) event.setCancelled(true);
+        if (getAccount(player.getUniqueId()).offline()) event.setCancelled(true);
     }
 
     @Listener(order = Order.FIRST, beforeModifications = true)
     public void onOpenInventory(InteractInventoryEvent.Open event, @First Player player) {
-        if (getAccount(player).offline()) event.setCancelled(true);
+        if (getAccount(player.getUniqueId()).offline()) event.setCancelled(true);
     }
 
     @Listener(order = Order.FIRST, beforeModifications = true)
     public void onPlayerItemDrop(DropItemEvent event, @First Player player) {
-        if (getAccount(player).offline()) event.setCancelled(true);
+        if (getAccount(player.getUniqueId()).offline()) event.setCancelled(true);
     }
 
     @Listener(order = Order.FIRST, beforeModifications = true)
     public void onPlayerItemPickup(ChangeInventoryEvent.Pickup event, @Root Player player) {
-        if (getAccount(player).offline()) event.setCancelled(true);
+        if (getAccount(player.getUniqueId()).offline()) event.setCancelled(true);
     }
 
     @Listener(order = Order.FIRST, beforeModifications = true)
     public void onItemConsume(UseItemStackEvent.Start event, @First Player player) {
-        if (getAccount(player).offline()) event.setCancelled(true);
+        if (getAccount(player.getUniqueId()).offline()) event.setCancelled(true);
     }
 
     @Listener(order = Order.FIRST, beforeModifications = true)
     public void onItemInteract(InteractItemEvent event, @First Player player) {
-        if (getAccount(player).offline()) event.setCancelled(true);
+        if (getAccount(player.getUniqueId()).offline()) event.setCancelled(true);
     }
 
     @Listener(order = Order.FIRST, beforeModifications = true)
     public void onInventoryChange(ChangeInventoryEvent event, @First Player player) {
-        if (getAccount(player).offline()) event.setCancelled(true);
+        if (getAccount(player.getUniqueId()).offline()) event.setCancelled(true);
     }
 
     @Listener(order = Order.FIRST, beforeModifications = true)
     public void onInventoryInteract(InteractInventoryEvent event, @First Player player) {
-        if (getAccount(player).offline()) event.setCancelled(true);
+        if (getAccount(player.getUniqueId()).offline()) event.setCancelled(true);
     }
 
     @Listener(order = Order.FIRST, beforeModifications = true)
     public void onInventoryClick(ClickInventoryEvent event, @First Player player) {
-        if (getAccount(player).offline()) event.setCancelled(true);
+        if (getAccount(player.getUniqueId()).offline()) event.setCancelled(true);
     }
 
     @Listener(order = Order.FIRST, beforeModifications = true)
     public void onBlockInteract(InteractBlockEvent event, @First Player player) {
-        if (getAccount(player).offline()) event.setCancelled(true);
+        if (getAccount(player.getUniqueId()).offline()) event.setCancelled(true);
     }
 
     @Listener(order = Order.FIRST, beforeModifications = true)
     public void onPlayerInteractEntity(InteractEntityEvent event, @First Player player) {
-        if (getAccount(player).offline()) event.setCancelled(true);
+        if (getAccount(player.getUniqueId()).offline()) event.setCancelled(true);
     }
 
     @Listener(order = Order.FIRST, beforeModifications = true)
     public void onPlayerDamage(DamageEntityEvent event, @First Player player) {
         //player is damage source
-        if (getAccount(player).offline()) event.setCancelled(true);
+        if (getAccount(player.getUniqueId()).offline()) event.setCancelled(true);
     }
 
     @Listener(order = Order.FIRST, beforeModifications = true)
     public void onDamagePlayer(DamageEntityEvent event, @Getter("getTargetEntity") Player player) {
         //player is damage target
-        if (getAccount(player).offline()) event.setCancelled(true);
+        if (getAccount(player.getUniqueId()).offline()) event.setCancelled(true);
     }
 
     /* prevent log password */

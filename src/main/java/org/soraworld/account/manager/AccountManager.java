@@ -20,6 +20,7 @@ import org.spongepowered.api.world.World;
 
 import java.nio.file.Path;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class AccountManager extends SpongeManager {
 
@@ -38,6 +39,7 @@ public class AccountManager extends SpongeManager {
     private static final HashMap<UUID, Double> originWalkSpeed = new HashMap<>();
     private static final HashMap<UUID, Double> originFlySpeed = new HashMap<>();
     private static final HashMap<UUID, GameMode> originGameMode = new HashMap<>();
+    private static final ConcurrentHashMap<UUID, Account> cache = new ConcurrentHashMap<>();
 
     public AccountManager(AuthAccount plugin, Path path) {
         super(plugin, path);
@@ -62,6 +64,7 @@ public class AccountManager extends SpongeManager {
 
     public void beforeLoad() {
         //run this task sync in order let it finish before the process ends
+        cache.clear();
         database.close();
         Sponge.getServer().getOnlinePlayers().forEach(this::unprotect);
     }
@@ -89,7 +92,9 @@ public class AccountManager extends SpongeManager {
             // TODO check user data will effect ??
             player.offer(account);
         });
-        Account account = database.remove(player);
+        // TODO remove cache remove database ?
+        cache.remove(player.getUniqueId());
+        //Account account = database.remove(player);
 
         unprotect(player);
 
@@ -119,7 +124,7 @@ public class AccountManager extends SpongeManager {
         email.sendResetEmail(account, player);
     }
 
-    public Map<String, Integer> getAttempts() {
+    public Map<UUID, Integer> getAttempts() {
         return new HashMap<>();
     }
 
@@ -182,8 +187,9 @@ public class AccountManager extends SpongeManager {
         }
     }
 
-
     public boolean pushAccount(Account account) {
+        // TODO 更新状态，只更新部分数据
+        // TODO 更新cache
         return database.save(account);
     }
 
@@ -204,6 +210,7 @@ public class AccountManager extends SpongeManager {
     }
 
     public boolean createAccount(Account account, boolean cache) {
+        // TODO cache
         return database.createAccount(account, cache);
     }
 
@@ -212,6 +219,7 @@ public class AccountManager extends SpongeManager {
     }
 
     public Account deleteAccount(String name) {
+        // TODO remove cache
         return database.deleteAccount(name);
     }
 
@@ -249,5 +257,20 @@ public class AccountManager extends SpongeManager {
 
     public boolean shouldHide(String command) {
         return cmdNames.contains(command);
+    }
+
+    /**
+     * 获取玩家账户<br>
+     * 所有使用的地方都应该先用 {@link Account#isRegistered} 检查是否已注册.
+     *
+     * @param uuid 玩家UUID
+     * @return 账户
+     */
+    public static Account getAccount(UUID uuid) {
+        return cache.computeIfAbsent(uuid, Account::new);
+    }
+
+    public boolean fallBack() {
+        return database.fallBack;
     }
 }
