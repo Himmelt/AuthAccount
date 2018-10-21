@@ -35,11 +35,9 @@ public final class CommandAccount {
             // TODO check password
             if (!password.isEmpty() && password.equals(args.get(2))) {
                 //Check if the first two passwords are equal to prevent typos
-                Sponge.getScheduler().createTaskBuilder()
-                        //we are executing a SQL Query which is blocking
-                        .async()
+                //we are executing a SQL Query which is blocking
+                Task.builder().async().name("RegisterQuery")
                         .execute(new RegisterTask(manager, player, password))
-                        .name("Register Query")
                         .submit(manager.getPlugin());
             } else manager.sendKey(player, "UnequalPasswordsMessage");
         } else manager.sendKey(player, "regUsage");

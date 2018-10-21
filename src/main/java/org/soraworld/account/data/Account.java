@@ -30,30 +30,31 @@ import static org.soraworld.account.util.Hash.hash;
 public class Account implements DataManipulator<Account, Account.Immutable> {
 
     private UUID uuid;
-    private String ip = "invalid-ip";
-    private String email = "";
     private String username = "";
-    private String password = "";
     // TODO multiple servers online status
     private boolean online = false;
+
+    private String regIP = "";
+    private String lastIP = "";
+    private String email = "";
+    private String password = "";
     private boolean registered = false;
     private Timestamp timestamp;
 
     private static final DataQuery IP = DataQuery.of("ip");
+    private static final DataQuery PASSWORD = DataQuery.of("password");
     private static final DataQuery REGISTERED = DataQuery.of("registered");
-    private static final DataQuery UUID = DataQuery.of("uuid");
     private static final DataQuery EMAIL = DataQuery.of("email");
     private static final DataQuery TIME = DataQuery.of("timestamp");
-    private static final DataQuery PASSWORD = DataQuery.of("password");
 
     public Account(Player player, String password) {
         this(player.getUniqueId(), player.getName(), password, "invalid-ip");
-        this.ip = IPUtil.getPlayerIP(player);
+        this.lastIP = IPUtil.getPlayerIP(player);
     }
 
     //new account
     public Account(UUID uuid, String username, String password, String ip) {
-        this.ip = ip;
+        this.regIP = ip;
         this.uuid = uuid;
         this.username = username;
         this.password = hash(password);
@@ -65,7 +66,7 @@ public class Account implements DataManipulator<Account, Account.Immutable> {
         //uuid in string format
         this.registered = true;
         this.password = resultSet.getString(4);
-        this.ip = resultSet.getString(5);
+        this.regIP = resultSet.getString(5);
         this.timestamp = resultSet.getTimestamp(6);
         this.email = resultSet.getString(7);
     }
@@ -76,7 +77,7 @@ public class Account implements DataManipulator<Account, Account.Immutable> {
         this.password = account.password;
         this.registered = account.registered;
         this.email = account.email;
-        this.ip = account.ip;
+        this.regIP = account.regIP;
         this.timestamp = account.timestamp;
         this.online = account.online;
     }
@@ -87,13 +88,12 @@ public class Account implements DataManipulator<Account, Account.Immutable> {
         this.password = account.password;
         this.registered = account.registered;
         this.email = account.email;
-        this.ip = account.ip;
+        this.regIP = account.ip;
         this.timestamp = account.timestamp;
         this.online = account.online;
     }
 
     public Account() {
-
     }
 
     public Account(User user, Account acc) {
@@ -102,7 +102,7 @@ public class Account implements DataManipulator<Account, Account.Immutable> {
         this.password = acc.password;
         this.email = acc.email;
         this.registered = true;
-        this.ip = acc.ip;
+        this.regIP = acc.regIP;
         this.timestamp = acc.timestamp;
     }
 
@@ -135,7 +135,7 @@ public class Account implements DataManipulator<Account, Account.Immutable> {
     }
 
     public synchronized void setIp(String ip) {
-        this.ip = ip;
+        this.regIP = ip;
     }
 
     public synchronized void setTimestamp(Timestamp timestamp) {
@@ -143,7 +143,7 @@ public class Account implements DataManipulator<Account, Account.Immutable> {
     }
 
     public synchronized String ip() {
-        return ip;
+        return regIP;
     }
 
     public synchronized Timestamp getTimestamp() {
@@ -187,7 +187,7 @@ public class Account implements DataManipulator<Account, Account.Immutable> {
         online = false;
         password = "";
         email = "";
-        ip = "";
+        regIP = "";
         timestamp = null;
     }
 
@@ -237,6 +237,7 @@ public class Account implements DataManipulator<Account, Account.Immutable> {
     public DataContainer toContainer() {
         // TODO 是否只有在存储数据到文件时才调用
         return DataContainer.createNew()
+                .set(IP, regIP)
                 .set(EMAIL, email)
                 .set(PASSWORD, password)
                 .set(REGISTERED, registered);
@@ -247,7 +248,7 @@ public class Account implements DataManipulator<Account, Account.Immutable> {
         this.username = account.username;
         this.registered = account.registered;
         this.online = account.online;
-        if (account.ip != null && !account.ip.isEmpty()) this.ip = account.ip;
+        if (account.regIP != null && !account.regIP.isEmpty()) this.regIP = account.regIP;
         if (account.email != null && !account.email.isEmpty()) this.email = account.email;
         if (account.password != null && !account.password.isEmpty()) this.password = account.password;
         if (account.timestamp != null) this.timestamp = account.timestamp;
@@ -268,17 +269,17 @@ public class Account implements DataManipulator<Account, Account.Immutable> {
     public static class Immutable implements ImmutableDataManipulator<Immutable, Account> {
 
         private UUID uuid;
-        private String ip = "invalid-ip";
+        private String ip = "";
         private String email = "";
         private String username = "";
         private String password = "";
         // TODO multiple servers online status
-        private boolean online = false;
+        private boolean online;
         private boolean registered = false;
         private Timestamp timestamp;
 
         public Immutable(Account account) {
-            this.ip = account.ip;
+            this.ip = account.regIP;
             this.email = account.email;
             this.password = account.password;
             this.online = account.online;
@@ -318,24 +319,21 @@ public class Account implements DataManipulator<Account, Account.Immutable> {
     }
 
     public static class Builder implements DataManipulatorBuilder<Account, Immutable> {
-
         public Account create() {
             return new Account();
         }
 
-        public Optional<Account> createFrom(DataHolder dataHolder) {
-            return create().fill(dataHolder);
+        public Optional<Account> createFrom(DataHolder holder) {
+            return create().fill(holder);
         }
 
         public Optional<Account> build(DataView con) throws InvalidDataException {
-            if (con.contains(EMAIL)) {
-                Account account = new Account();
-                con.getString(IP).ifPresent(s -> account.ip = s);
-                con.getString(EMAIL).ifPresent(s -> account.email = s);
-                con.getString(PASSWORD).ifPresent(s -> account.password = s);
-                con.getBoolean(REGISTERED).ifPresent(b -> account.registered = b);
-                return Optional.of(account);
-            } else return Optional.empty();
+            Account account = new Account();
+            con.getString(IP).ifPresent(s -> account.regIP = s);
+            con.getString(EMAIL).ifPresent(s -> account.email = s);
+            con.getString(PASSWORD).ifPresent(s -> account.password = s);
+            con.getBoolean(REGISTERED).ifPresent(b -> account.registered = b);
+            return Optional.of(account);
         }
     }
 }
