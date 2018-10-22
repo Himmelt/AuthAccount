@@ -32,13 +32,14 @@ public final class CommandAccount {
         Player player = (Player) sender;
         if (args.size() == 2) {
             String password = args.get(1);
-            // TODO check password
-            if (!password.isEmpty() && password.equals(args.get(2))) {
-                //Check if the first two passwords are equal to prevent typos
-                //we are executing a SQL Query which is blocking
-                Task.builder().async().name("RegisterQuery")
-                        .execute(new RegisterTask(manager, player, password))
-                        .submit(manager.getPlugin());
+            if (password.equals(args.get(2))) {
+                if (manager.legalPswd(password)) {
+                    //Check if the first two passwords are equal to prevent typos
+                    //we are executing a SQL Query which is blocking
+                    Task.builder().async().name("RegisterQuery")
+                            .execute(new RegisterTask(manager, player, password))
+                            .submit(manager.getPlugin());
+                } else manager.sendKey(player, "illegalPassword");
             } else manager.sendKey(player, "UnequalPasswordsMessage");
         } else manager.sendKey(player, "regUsage");
     }

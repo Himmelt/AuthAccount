@@ -240,8 +240,12 @@ public class AccountManager extends SpongeManager {
         return general.waitTime;
     }
 
+    public boolean legalPswd(String pswd) {
+        return pswd != null && general.pswdRegex.matcher(pswd).matches();
+    }
+
     public boolean legalName(String name) {
-        return name != null && !general.banNames.contains(name) && general.nameRegex.matcher(name).matches();
+        return name != null && !general.banNames.contains(name.toLowerCase()) && general.nameRegex.matcher(name).matches();
     }
 
     public boolean enableDB() {

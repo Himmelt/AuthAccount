@@ -11,7 +11,9 @@ import java.util.regex.Pattern;
 @Serializable
 public class General {
     @Setting(comment = "comment.general.nameRegex")
-    public Pattern nameRegex = Pattern.compile("[A-Za-z0-9_-]{1,15}");
+    public Pattern nameRegex = Pattern.compile("[A-Za-z0-9_-]{3,15}");
+    @Setting(comment = "comment.general.pswdRegex")
+    public Pattern pswdRegex = Pattern.compile("[!-~]{4,16}");
     @Setting(comment = "Should the plugin login users automatically if it's the same account from the same IP")
     public boolean ipAutoLogin = false;
     @Setting(comment = "Should only the specified commands be protected from unauthorized access")
@@ -35,7 +37,19 @@ public class General {
     @Setting(comment = "Interval where the please login will be printed to the user")
     public int messageInterval = 2;
     @Setting(comment = "comment.banNames")
-    public ArrayList<String> banNames = new ArrayList<>(Arrays.asList("op", "server", "admin", "administrator", "notch"));
+    public ArrayList<String> banNames = new ArrayList<>(Arrays.asList(
+            "___",
+            "---",
+            "123",
+            "1234",
+            "12345",
+            "op",
+            "server",
+            "admin",
+            "administrator",
+            "mc",
+            "minecraft",
+            "notch"));
     @Setting(comment = "comment.allowCommands")
     public HashSet<String> allowCommands = new HashSet<>();
 }

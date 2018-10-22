@@ -17,7 +17,6 @@ public class RegisterTask implements Runnable {
     private final String pswdhash;
     private final AccountManager manager;
 
-    // TODO 添加 email 参数
     public RegisterTask(AccountManager manager, Player player, String password) {
         this.player = player;
         this.pswdhash = Hash.hash(password);
