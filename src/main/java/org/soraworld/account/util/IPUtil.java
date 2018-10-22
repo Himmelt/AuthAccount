@@ -2,7 +2,7 @@ package org.soraworld.account.util;
 
 import org.spongepowered.api.entity.living.player.Player;
 
-public class IPUtil {
+public final class IPUtil {
 
     public static String byte2ipv4(byte[] ip) {
         if (ip != null && ip.length == 4) {
@@ -16,7 +16,8 @@ public class IPUtil {
         return (int) _byte & 0xff;
     }
 
-    public static String getPlayerIP(Player player) {
-        return byte2ipv4(player.getConnection().getAddress().getAddress().getAddress());
+
+    public static int getPlayerIP(Player player) {
+        return player.getConnection().getAddress().getAddress().hashCode();
     }
 }

@@ -38,6 +38,10 @@ public class Database {
     public String password = "";
     @Setting(comment = "comment.database.useSSL")
     public boolean useSSL = false;
+    @Setting(comment = "comment.database.accountTable")
+    private String historyTable = "history";
+    @Setting(comment = "comment.database.historySize")
+    public long historySize = 0;
 
     private SqlService sql;
     private String jdbcURL;
@@ -226,13 +230,13 @@ public class Database {
         return null;
     }
 
-    public int getRegistrationsCount(String ip) {
+    public int getRegistrationsCount(int ip) {
         Connection conn = null;
         try {
             conn = getConnection();
 
             PreparedStatement statement = conn.prepareStatement("SELECT COUNT(*) FROM " + accountTable + " WHERE IP=?");
-            statement.setString(1, ip);
+            statement.setInt(1, ip);
 
             ResultSet resultSet = statement.executeQuery();
             if (resultSet.next()) {
@@ -258,7 +262,7 @@ public class Database {
             prepareStatement.setString(2, account.username());
             prepareStatement.setString(3, account.password());
 
-            prepareStatement.setString(4, account.ip());
+            prepareStatement.setInt(4, account.ip());
 
             prepareStatement.setString(5, account.getEmail());
             prepareStatement.setTimestamp(6, account.getTimestamp());
@@ -329,7 +333,7 @@ public class Database {
             //username is now changeable by Mojang - so keep it up to date
             statement.setString(1, account.username());
             statement.setString(2, account.password());
-            statement.setString(3, account.ip());
+            statement.setInt(3, account.ip());
 
             statement.setTimestamp(4, account.getTimestamp());
             statement.setString(5, account.getEmail());

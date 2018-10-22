@@ -34,8 +34,6 @@ public final class CommandAccount {
             String password = args.get(1);
             if (password.equals(args.get(2))) {
                 if (manager.legalPswd(password)) {
-                    //Check if the first two passwords are equal to prevent typos
-                    //we are executing a SQL Query which is blocking
                     Task.builder().async().name("RegisterQuery")
                             .execute(new RegisterTask(manager, player, password))
                             .submit(manager.getPlugin());

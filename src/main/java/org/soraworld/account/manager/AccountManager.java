@@ -206,7 +206,7 @@ public class AccountManager extends SpongeManager {
         database.flushLoginStatus(account, online);
     }
 
-    public int getRegistrationsCount(String ip) {
+    public int getRegistrationsCount(int ip) {
         return database.getRegistrationsCount(ip);
     }
 

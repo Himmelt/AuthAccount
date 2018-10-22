@@ -1,7 +1,6 @@
 package org.soraworld.account.data;
 
 import org.mindrot.jbcrypt.BCrypt;
-import org.soraworld.account.util.IPUtil;
 import org.spongepowered.api.data.DataContainer;
 import org.spongepowered.api.data.DataHolder;
 import org.spongepowered.api.data.DataQuery;
@@ -34,8 +33,8 @@ public class Account implements DataManipulator<Account, Account.Immutable> {
     // TODO multiple servers online status
     private boolean online = false;
 
-    private String regIP = "";
-    private String lastIP = "";
+    private int regIP = 0;
+    private int lastIP = 0;
     private String email = "";
     private String password = "";
     private boolean registered = false;
@@ -48,12 +47,12 @@ public class Account implements DataManipulator<Account, Account.Immutable> {
     private static final DataQuery TIME = DataQuery.of("timestamp");
 
     public Account(Player player, String password) {
-        this(player.getUniqueId(), player.getName(), password, "invalid-ip");
-        this.lastIP = IPUtil.getPlayerIP(player);
+        this(player.getUniqueId(), player.getName(), password, 0);// TODO ip 0 ??? regip ? lastip ?
+        this.lastIP = player.getConnection().getAddress().getAddress().hashCode();
     }
 
     //new account
-    public Account(UUID uuid, String username, String password, String ip) {
+    public Account(UUID uuid, String username, String password, int ip) {
         this.regIP = ip;
         this.uuid = uuid;
         this.username = username;
@@ -66,7 +65,7 @@ public class Account implements DataManipulator<Account, Account.Immutable> {
         //uuid in string format
         this.registered = true;
         this.password = resultSet.getString(4);
-        this.regIP = resultSet.getString(5);
+        this.regIP = resultSet.getInt(5);
         this.timestamp = resultSet.getTimestamp(6);
         this.email = resultSet.getString(7);
     }
@@ -134,7 +133,7 @@ public class Account implements DataManipulator<Account, Account.Immutable> {
         this.password = hash(pswd);
     }
 
-    public synchronized void setIp(String ip) {
+    public synchronized void setIp(int ip) {
         this.regIP = ip;
     }
 
@@ -142,7 +141,7 @@ public class Account implements DataManipulator<Account, Account.Immutable> {
         this.timestamp = timestamp;
     }
 
-    public synchronized String ip() {
+    public synchronized int ip() {
         return regIP;
     }
 
@@ -187,7 +186,7 @@ public class Account implements DataManipulator<Account, Account.Immutable> {
         online = false;
         password = "";
         email = "";
-        regIP = "";
+        regIP = 0;
         timestamp = null;
     }
 
@@ -248,7 +247,7 @@ public class Account implements DataManipulator<Account, Account.Immutable> {
         this.username = account.username;
         this.registered = account.registered;
         this.online = account.online;
-        if (account.regIP != null && !account.regIP.isEmpty()) this.regIP = account.regIP;
+        if (account.regIP != 0) this.regIP = account.regIP;
         if (account.email != null && !account.email.isEmpty()) this.email = account.email;
         if (account.password != null && !account.password.isEmpty()) this.password = account.password;
         if (account.timestamp != null) this.timestamp = account.timestamp;
@@ -269,7 +268,7 @@ public class Account implements DataManipulator<Account, Account.Immutable> {
     public static class Immutable implements ImmutableDataManipulator<Immutable, Account> {
 
         private UUID uuid;
-        private String ip = "";
+        private int ip = 0;
         private String email = "";
         private String username = "";
         private String password = "";
@@ -329,7 +328,7 @@ public class Account implements DataManipulator<Account, Account.Immutable> {
 
         public Optional<Account> build(DataView con) throws InvalidDataException {
             Account account = new Account();
-            con.getString(IP).ifPresent(s -> account.regIP = s);
+            con.getInt(IP).ifPresent(s -> account.regIP = s);
             con.getString(EMAIL).ifPresent(s -> account.email = s);
             con.getString(PASSWORD).ifPresent(s -> account.password = s);
             con.getBoolean(REGISTERED).ifPresent(b -> account.registered = b);

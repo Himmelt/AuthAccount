@@ -26,7 +26,7 @@ public class ForceRegTask implements Runnable {
 
         if (account == null) {
             try {
-                account = new Account(accountIndentifer, "", password, "invalid");
+                account = new Account(accountIndentifer, "", password, 0);
                 if (manager.createAccount(account, false)) {
                     manager.sendKey(sender, "ForceRegisterSuccessMessage");
                 } else {

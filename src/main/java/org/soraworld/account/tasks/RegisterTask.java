@@ -47,6 +47,7 @@ public class RegisterTask implements Runnable {
                 }
                 manager.sendKey(player, "AccountCreated");
                 // 必须等注册成功才能设置这一步
+                // TODO 注册 IP 啥时候设置？
                 account.setRegistered(true);
                 account.setOnline(true);
                 if (manager.updateLoginStatus()) {
