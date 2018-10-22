@@ -32,8 +32,8 @@ public final class CommandAccount {
         AccountManager manager = (AccountManager) self.manager;
         Player player = (Player) sender;
         if (args.size() == 2) {
-            String password = args.get(1);
-            if (password.equals(args.get(2))) {
+            String password = args.first();
+            if (password.equals(args.get(1))) {
                 if (manager.legalPswd(password)) {
                     Task.builder().async().name("RegisterQuery")
                             .execute(new RegisterTask(manager, player, password))
@@ -52,6 +52,10 @@ public final class CommandAccount {
     public static void login(SpongeCommand self, CommandSource sender, Args args) {
         AccountManager manager = (AccountManager) self.manager;
         Player player = (Player) sender;
+        login(args, manager, player);
+    }
+
+    static void login(Args args, AccountManager manager, Player player) {
         if (getAccount(player.getUniqueId()).offline()) {
             if (args.notEmpty()) {
                 Task.builder().async().name("LoginQuery")

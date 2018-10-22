@@ -110,7 +110,7 @@ public class Account implements DataManipulator<Account, Account.Immutable> {
     }
 
     public boolean checkPassword(String password) {
-        return BCrypt.checkpw(this.password, password);
+        return BCrypt.checkpw(password, this.password);
     }
 
     public UUID uuid() {
