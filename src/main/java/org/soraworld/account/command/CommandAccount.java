@@ -4,6 +4,7 @@ import com.google.common.base.Charsets;
 import org.soraworld.account.data.Account;
 import org.soraworld.account.manager.AccountManager;
 import org.soraworld.account.tasks.ForceRegTask;
+import org.soraworld.account.tasks.LoginTask;
 import org.soraworld.account.tasks.RegisterTask;
 import org.soraworld.account.tasks.ResetPwTask;
 import org.soraworld.violet.command.Args;
@@ -49,7 +50,15 @@ public final class CommandAccount {
 
     @Sub(onlyPlayer = true, aliases = {"l", "log"}, usage = "/account login <password>")
     public static void login(SpongeCommand self, CommandSource sender, Args args) {
-
+        AccountManager manager = (AccountManager) self.manager;
+        Player player = (Player) sender;
+        if (getAccount(player.getUniqueId()).offline()) {
+            if (args.notEmpty()) {
+                Task.builder().async().name("LoginQuery")
+                        .execute(new LoginTask(manager, player, args.first()))
+                        .submit(manager.getPlugin());
+            } else manager.sendKey(player, "emptyArgs");
+        } else manager.sendKey(player, "alreadyLoggedIn");
     }
 
     @Sub(onlyPlayer = true, aliases = {"mail"}, usage = "/account email [mail-address]")
@@ -127,7 +136,7 @@ public final class CommandAccount {
     public static void admin_register(SpongeCommand self, CommandSource sender, Args args) {
         AccountManager manager = (AccountManager) self.manager;
 
-        if (!checkOnline(manager, sender)) return;
+        if (isOffline(manager, sender)) return;
 
         if (args.size() == 2) {
             String text = args.first();
@@ -161,7 +170,7 @@ public final class CommandAccount {
     @Sub(path = "admin.unregister", perm = "admin", aliases = {"unreg"}, usage = "/account admin unreg <account> [confirm]")
     public static void admin_unregister(SpongeCommand self, CommandSource sender, Args args) {
         AccountManager manager = (AccountManager) self.manager;
-        if (!checkOnline(manager, sender)) return;
+        if (isOffline(manager, sender)) return;
         if (args.notEmpty()) {
             String text = args.first();
             try {
@@ -186,7 +195,7 @@ public final class CommandAccount {
     @Sub(path = "admin.resetpassword", perm = "admin", aliases = {"reset", "resetpswd"}, usage = "/account admin resetpswd <account> <password>")
     public static void resetpassword(SpongeCommand self, CommandSource sender, Args args) {
         AccountManager manager = (AccountManager) self.manager;
-        if (!checkOnline(manager, sender)) return;
+        if (isOffline(manager, sender)) return;
         if (args.size() == 2) {
             String text = args.first();
             String pswd = args.get(1);
@@ -232,19 +241,19 @@ public final class CommandAccount {
         } else manager.sendKey(sender, "invalidArgs");
     }
 
-    private static boolean checkOnline(AccountManager manager, CommandSource sender) {
+    private static boolean isOffline(AccountManager manager, CommandSource sender) {
         if (sender instanceof Player) {
             Player player = (Player) sender;
             Account account = getAccount(player.getUniqueId());
             if (!account.isRegistered()) {
                 manager.sendKey(player, "accountNotRegister");
-                return false;
+                return true;
             }
             if (account.offline()) {
                 manager.sendKey(player, "pleaseLogin");
-                return false;
+                return true;
             }
         }
-        return true;
+        return false;
     }
 }

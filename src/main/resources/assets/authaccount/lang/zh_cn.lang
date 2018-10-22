@@ -12,6 +12,9 @@ comment {
     enable = "启用数据库存储."
     type = "数据库类型, 可选 H2/SQLite/MySQL, Sponge 官方 !不建议 使用 SQLite"
   }
+  spawn {
+    enabled = ""
+  }
 }
 
 accountAlreadyExists = "&4账户已注册,请输入 &a/login <密码> &r登录."

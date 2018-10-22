@@ -16,6 +16,9 @@ comment {
     password = "Password in order to login"
     useSSL = "It's strongly recommended to enable SSL and setup a SSL certificate if the MySQL server isn't running on the same machine"
   }
+  spawn {
+    enabled = ""
+  }
 }
 
 comment = "When the account does not exist on the account database."

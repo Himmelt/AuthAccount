@@ -32,8 +32,9 @@ public class RegisterTask implements Runnable {
         } else account = getAccount(uuid);
 
         if (account == null || !account.isRegistered()) {
-            int regByIp = manager.getRegistrationsCount(IPUtil.getPlayerIP(player));
-            if (manager.getMaxIpReg() >= 1 && regByIp >= manager.getMaxIpReg()) {
+            int regIp = IPUtil.getPlayerIP(player);
+            int count = manager.getRegistrationsCount(regIp);
+            if (manager.getMaxIpReg() >= 1 && count >= manager.getMaxIpReg()) {
                 manager.sendKey(player, "MaxIpRegMessage");
                 return;
             }
@@ -42,23 +43,25 @@ public class RegisterTask implements Runnable {
                 account.setUUID(uuid);
                 account.setUsername(player.getName());
                 account.setPassword(pswdhash);
-                if (!manager.createAccount(account, true)) {
+                account.setOnline(false);
+                account.setIp(regIp);
+                // TODO 数据库操作失败 fallback
+                if (manager.enableDB() && !manager.createAccount(account, true)) {
                     return;
                 }
                 manager.sendKey(player, "AccountCreated");
                 // 必须等注册成功才能设置这一步
                 // TODO 注册 IP 啥时候设置？
                 account.setRegistered(true);
-                account.setOnline(true);
+
                 if (manager.updateLoginStatus()) {
                     manager.flushLoginStatus(account, true);
                 }
 
-                Task.builder()
-                        .execute(() -> manager.unprotect(player))
+                Task.builder().execute(() -> manager.unprotect(player))
                         .submit(manager.getPlugin());
-            } catch (Exception ex) {
-                if (manager.isDebug()) ex.printStackTrace();
+            } catch (Exception e) {
+                if (manager.isDebug()) e.printStackTrace();
                 manager.console("Error creating hash");
                 manager.sendKey(player, "ErrorCommandMessage");
             }

@@ -27,7 +27,6 @@ public class ResetPwTask implements Runnable {
         this.manager = manager;
     }
 
-    @Override
     public void run() {
         Account account;
         if (accountIndentifer instanceof String) {
@@ -42,7 +41,7 @@ public class ResetPwTask implements Runnable {
             try {
                 account.setPassword(password);
                 manager.sendKey(src, "ChangePasswordMessage");
-            } catch (Exception ex) {
+            } catch (Exception e) {
                 manager.console("Error creating hash");
             }
         }

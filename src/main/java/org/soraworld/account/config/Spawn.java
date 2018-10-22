@@ -10,11 +10,10 @@ import java.util.Optional;
 
 @Serializable
 public class Spawn {
-    // TODO private
-    @Setting
-    public boolean enabled;
+    @Setting(comment = "comment.spawn.enabled")
+    public boolean enabled = true;
     @Setting(comment = "Should the plugin use the default spawn from the world you specify below")
-    public boolean defaultSpawn;
+    public boolean defaultSpawn = false;
     @Setting(comment = "Spawn world or let it empty to use the default world specified in the server properties")
     public String worldName = "";
     @Setting
