@@ -17,6 +17,8 @@ comment {
   }
 }
 
+pleaseLogin = "请先输入指令 &b/login <密码>&r 登陆账号."
+
 accountAlreadyExists = "&4账户已注册,请输入 &a/login <密码> &r登录."
 accountCreated = "&2账户注册成功!"
 accountDeleted = "&2账户 %s 已删除."

@@ -1,6 +1,5 @@
 package org.soraworld.account.data;
 
-import org.mindrot.jbcrypt.BCrypt;
 import org.spongepowered.api.data.DataContainer;
 import org.spongepowered.api.data.DataHolder;
 import org.spongepowered.api.data.DataQuery;
@@ -24,7 +23,8 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
-import static org.soraworld.account.util.Hash.hash;
+import static org.soraworld.account.util.Pswd.encode;
+import static org.soraworld.account.util.Pswd.matches;
 
 public class Account implements DataManipulator<Account, Account.Immutable> {
 
@@ -56,7 +56,7 @@ public class Account implements DataManipulator<Account, Account.Immutable> {
         this.regIP = ip;
         this.uuid = uuid;
         this.username = username;
-        this.password = hash(password);
+        this.password = encode(password);
         this.timestamp = new Timestamp(System.currentTimeMillis());
     }
 
@@ -109,8 +109,8 @@ public class Account implements DataManipulator<Account, Account.Immutable> {
         this.uuid = uuid;
     }
 
-    public boolean checkPassword(String password) {
-        return BCrypt.checkpw(password, this.password);
+    public boolean checkPassword(String plainPswd) {
+        return matches(plainPswd, this.password);
     }
 
     public UUID uuid() {
@@ -130,7 +130,7 @@ public class Account implements DataManipulator<Account, Account.Immutable> {
     }
 
     public synchronized void setPassword(String pswd) {
-        this.password = hash(pswd);
+        this.password = encode(pswd);
     }
 
     public synchronized void setIp(int ip) {

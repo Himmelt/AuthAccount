@@ -2,7 +2,6 @@ package org.soraworld.account.tasks;
 
 import org.soraworld.account.data.Account;
 import org.soraworld.account.manager.AccountManager;
-import org.soraworld.account.util.Hash;
 import org.soraworld.account.util.IPUtil;
 import org.spongepowered.api.entity.living.player.Player;
 import org.spongepowered.api.scheduler.Task;
@@ -10,6 +9,7 @@ import org.spongepowered.api.scheduler.Task;
 import java.util.UUID;
 
 import static org.soraworld.account.manager.AccountManager.getAccount;
+import static org.soraworld.account.util.Pswd.encode;
 
 public class RegisterTask implements Runnable {
 
@@ -19,7 +19,7 @@ public class RegisterTask implements Runnable {
 
     public RegisterTask(AccountManager manager, Player player, String password) {
         this.player = player;
-        this.pswdhash = Hash.hash(password);
+        this.pswdhash = encode(password);
         this.manager = manager;
     }
 
@@ -43,7 +43,7 @@ public class RegisterTask implements Runnable {
                 account.setUUID(uuid);
                 account.setUsername(player.getName());
                 account.setPassword(pswdhash);
-                account.setOnline(false);
+                account.setOnline(true);
                 account.setIp(regIp);
                 // TODO 数据库操作失败 fallback
                 if (manager.enableDB() && !manager.createAccount(account, true)) {
@@ -53,11 +53,14 @@ public class RegisterTask implements Runnable {
                 // 必须等注册成功才能设置这一步
                 // TODO 注册 IP 啥时候设置？
                 account.setRegistered(true);
+                System.out.println("reg task:" + account.hashCode() + "|" + account.isRegistered());
 
                 if (manager.updateLoginStatus()) {
                     manager.flushLoginStatus(account, true);
                 }
 
+                // TODO 同步
+                if (manager.enableDB()) getAccount(uuid).sync(account);
                 Task.builder().execute(() -> manager.unprotect(player))
                         .submit(manager.getPlugin());
             } catch (Exception e) {

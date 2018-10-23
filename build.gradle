@@ -42,7 +42,6 @@ configurations {
 dependencies {
     compile 'org.soraworld:violet-sponge:2.3.7'
     compile 'org.spongepowered:spongeapi:7.1.0-SNAPSHOT'
-    shade 'org.mindrot:jbcrypt:0.4'
     shade 'javax.mail:javax.mail-api:1.6.2'
     //compile 'com.sun.mail:javax.mail:1.6.0'
 }

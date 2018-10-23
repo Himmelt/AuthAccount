@@ -11,10 +11,8 @@ import org.soraworld.hocon.node.Setting;
 import org.soraworld.violet.manager.SpongeManager;
 import org.soraworld.violet.util.ChatColor;
 import org.spongepowered.api.Sponge;
-import org.spongepowered.api.data.manipulator.mutable.entity.MovementSpeedData;
 import org.spongepowered.api.entity.living.player.Player;
 import org.spongepowered.api.entity.living.player.gamemode.GameMode;
-import org.spongepowered.api.entity.living.player.gamemode.GameModes;
 import org.spongepowered.api.world.Location;
 import org.spongepowered.api.world.World;
 
@@ -88,17 +86,14 @@ public class AccountManager extends SpongeManager {
     }
 
     public void logout(Player player) {
-        player.getOrCreate(Account.class).ifPresent(account -> {
-            account.setOnline(false);
-            // TODO check user data will effect ??
-            player.offer(account);
-        });
-        // TODO remove cache remove database ?
-        cache.remove(player.getUniqueId());
-        //Account account = database.remove(player);
+
+        Account account = getAccount(player.getUniqueId());
+        account.setUUID(player.getUniqueId());
+        account.setUsername(player.getName());
+        account.setOnline(false);
 
         unprotect(player);
-
+        cache.remove(player.getUniqueId());
 /*        if (account != null) {
             plugin.getAttempts().remove(player.getName());
             //account is loaded -> mark the player as logout as it could remain in the cache
@@ -130,18 +125,6 @@ public class AccountManager extends SpongeManager {
     }
 
     public void protect(Player player) {
-        originGameMode.put(player.getUniqueId(), player.gameMode().get());
-        player.offer(player.gameMode().set(GameModes.SPECTATOR));
-        player.getOrCreate(MovementSpeedData.class).ifPresent(speed -> {
-            originWalkSpeed.put(player.getUniqueId(), speed.walkSpeed().get());
-            originFlySpeed.put(player.getUniqueId(), speed.flySpeed().get());
-            // TODO check negative speed
-            speed.set(speed.walkSpeed().set(0.0D));
-            speed.set(speed.flySpeed().set(0.0D));
-            System.out.println(speed.walkSpeed().get());
-            System.out.println(speed.flySpeed().get());
-            player.offer(speed);
-        });
         if (spawn.enabled) {
             Location<World> spawnLocation = spawn.getSpawnLocation();
             if (spawnLocation != null) {
@@ -165,16 +148,10 @@ public class AccountManager extends SpongeManager {
 
     public void unprotect(Player player) {
         UUID uuid = player.getUniqueId();
-        GameMode mode = originGameMode.remove(uuid);
-        player.offer(player.gameMode().set(mode != null ? mode : GameModes.CREATIVE));
-        player.getOrCreate(MovementSpeedData.class).ifPresent(speed -> {
-            // TODO check default value
-            speed.walkSpeed().set(originWalkSpeed.getOrDefault(uuid, 0.1D));
-            originWalkSpeed.remove(uuid);
-            speed.flySpeed().set(originFlySpeed.getOrDefault(uuid, 0.1D));
-            originFlySpeed.remove(uuid);
-            player.offer(speed);
-        });
+        Account acc = getAccount(uuid);
+        System.out.println("unprotect " + uuid + "|" + acc.hashCode());
+        System.out.println(acc.isRegistered());
+        player.offer(getAccount(uuid));
 
         Location<World> oldLocation = oldLocations.remove(uuid);
         if (oldLocation == null) {
@@ -272,6 +249,7 @@ public class AccountManager extends SpongeManager {
      * @return 账户
      */
     public static Account getAccount(UUID uuid) {
+        System.out.println("get:" + cache.containsKey(uuid));
         return cache.computeIfAbsent(uuid, Account::new);
     }
 
