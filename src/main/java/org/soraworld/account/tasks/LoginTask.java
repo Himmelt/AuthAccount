@@ -28,8 +28,8 @@ public class LoginTask implements Runnable {
         Account account;
         if (manager.enableDB()) {
             account = manager.pullAccount(uuid);
-            if (account == null && manager.fallBack()) account = getAccount(uuid);
-        } else account = getAccount(uuid);
+            if (account == null && manager.fallBack()) account = getAccount(player);
+        } else account = getAccount(player);
 
         if (account != null && account.isRegistered()) {
             // TODO 验证登陆时，从 DB 拉取数据 DB --> NBT 并更新缓存
@@ -53,7 +53,7 @@ public class LoginTask implements Runnable {
                     manager.sendKey(player, "LoggedIn");
                     Task.builder().execute(() -> manager.unprotect(player)).submit(manager.getPlugin());
                     if (manager.enableDB()) {
-                        getAccount(uuid).sync(account);// 更新缓存 DB --> NBT
+                        getAccount(player).sync(account);// 更新缓存 DB --> NBT
                         manager.pushAccount(account);// 更新数据库状态 NBT --> DB
                         if (manager.updateLoginStatus()) {
                             manager.flushLoginStatus(account, true);

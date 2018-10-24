@@ -1,10 +1,9 @@
+/.idea
+/.gradle
 /build
-
+/lib
+/out
 # intellij
 *.iml
 *.ipr
 *.iws
-.idea/
-
-# Gradle
-.gradle

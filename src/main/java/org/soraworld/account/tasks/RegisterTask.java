@@ -28,8 +28,8 @@ public class RegisterTask implements Runnable {
         Account account;
         if (manager.enableDB()) {
             account = manager.pullAccount(uuid);
-            if (account == null && manager.fallBack()) account = getAccount(uuid);
-        } else account = getAccount(uuid);
+            if (account == null && manager.fallBack()) account = getAccount(player);
+        } else account = getAccount(player);
 
         if (account == null || !account.isRegistered()) {
             int regIp = IPUtil.getPlayerIP(player);
@@ -60,7 +60,7 @@ public class RegisterTask implements Runnable {
                 }
 
                 // TODO 同步
-                if (manager.enableDB()) getAccount(uuid).sync(account);
+                if (manager.enableDB()) getAccount(player).sync(account);
                 Task.builder().execute(() -> manager.unprotect(player))
                         .submit(manager.getPlugin());
             } catch (Exception e) {

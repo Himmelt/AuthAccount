@@ -129,8 +129,9 @@ public class Account implements DataManipulator<Account, Account.Immutable> {
         this.username = username;
     }
 
-    public synchronized void setPassword(String pswd) {
+    public Account setPassword(String pswd) {
         this.password = encode(pswd);
+        return this;
     }
 
     public synchronized void setIp(int ip) {
@@ -167,8 +168,9 @@ public class Account implements DataManipulator<Account, Account.Immutable> {
         return online;
     }
 
-    public synchronized void setOnline(boolean online) {
+    public synchronized Account setOnline(boolean online) {
         this.online = online;
+        return this;
     }
 
     public Optional<Account> fill(DataHolder holder, MergeFunction overlap) {
@@ -257,8 +259,9 @@ public class Account implements DataManipulator<Account, Account.Immutable> {
         return registered && password != null && !password.isEmpty();
     }
 
-    public void setRegistered(boolean registered) {
+    public Account setRegistered(boolean registered) {
         this.registered = registered;
+        return this;
     }
 
     public void setUUID(UUID uuid) {

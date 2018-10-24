@@ -80,6 +80,10 @@ public class AuthAccount extends SpongePlugin {
         }
     }
 
+    public void afterEnable() {
+        ((AccountManager) manager).protectAll();
+    }
+
     public void beforeDisable() {
         ((AccountManager) manager).closeDatabase();
         ((AccountManager) manager).unProtectAll();

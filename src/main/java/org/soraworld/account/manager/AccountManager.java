@@ -12,6 +12,7 @@ import org.soraworld.violet.manager.SpongeManager;
 import org.soraworld.violet.util.ChatColor;
 import org.spongepowered.api.Sponge;
 import org.spongepowered.api.entity.living.player.Player;
+import org.spongepowered.api.entity.living.player.User;
 import org.spongepowered.api.entity.living.player.gamemode.GameMode;
 import org.spongepowered.api.world.Location;
 import org.spongepowered.api.world.World;
@@ -85,37 +86,6 @@ public class AccountManager extends SpongeManager {
 
     }
 
-    public void logout(Player player) {
-
-        Account account = getAccount(player.getUniqueId());
-        account.setUUID(player.getUniqueId());
-        account.setUsername(player.getName());
-        account.setOnline(false);
-
-        unprotect(player);
-        cache.remove(player.getUniqueId());
-/*        if (account != null) {
-            plugin.getAttempts().remove(player.getName());
-            //account is loaded -> mark the player as logout as it could remain in the cache
-            account.setOnline(false);
-
-            if (plugin.loader().config().isUpdateLoginStatus()) {
-                Sponge.getScheduler().createTaskBuilder()
-                        .async().execute(() -> plugin.getDatabase().flushLoginStatus(account, false))
-                        .submit(plugin);
-            }
-        }*/
-    }
-
-    public void join(Player player) {
-        protect(player);
-
-/*        Sponge.getScheduler().createTaskBuilder()
-                .async()
-                .execute(() -> onAccountLoaded(player))
-                .submit(plugin);*/
-    }
-
     public void sendResetEmail(Account account, Player player) {
         email.sendResetEmail(account, player);
     }
@@ -147,17 +117,10 @@ public class AccountManager extends SpongeManager {
     }
 
     public void unprotect(Player player) {
-        UUID uuid = player.getUniqueId();
-        Account acc = getAccount(uuid);
-        System.out.println("unprotect " + uuid + "|" + acc.hashCode());
-        System.out.println(acc.isRegistered());
-        player.offer(getAccount(uuid));
-
-        Location<World> oldLocation = oldLocations.remove(uuid);
+        Location<World> oldLocation = oldLocations.remove(player.getUniqueId());
         if (oldLocation == null) {
             return;
         }
-
         if (general.safeLocation) {
             Sponge.getTeleportHelper().getSafeLocation(oldLocation).ifPresent(player::setLocation);
         } else {
@@ -241,19 +204,28 @@ public class AccountManager extends SpongeManager {
         return plugin.getCmdNames().contains(command);
     }
 
-    /**
-     * 获取玩家账户<br>
-     * 所有使用的地方都应该先用 {@link Account#isRegistered} 检查是否已注册.
-     *
-     * @param uuid 玩家UUID
-     * @return 账户
-     */
-    public static Account getAccount(UUID uuid) {
-        System.out.println("get:" + cache.containsKey(uuid));
-        return cache.computeIfAbsent(uuid, Account::new);
+    /* 禁止在主线程以外执行 */
+    public static Account getAccount(User user) {
+        return cache.computeIfAbsent(user.getUniqueId(), uuid -> {
+            Account account = user.getOrCreate(Account.class).orElse(new Account());
+            account.setUUID(uuid);
+            account.setUsername(user.getName());
+            user.offer(account);
+            return account;
+        });
+    }
+
+    /* 必须在最后一句调用 */
+    public static void removeCache(User user) {
+        Account acc = cache.remove(user.getUniqueId());
+        user.offer(acc != null ? acc.setOnline(false) : new Account());
     }
 
     public boolean fallBack() {
         return database.fallBack;
+    }
+
+    public void protectAll() {
+
     }
 }

@@ -5,7 +5,6 @@ import org.soraworld.account.data.Account;
 import org.soraworld.account.manager.AccountManager;
 import org.soraworld.account.tasks.ForceRegTask;
 import org.soraworld.account.tasks.LoginTask;
-import org.soraworld.account.tasks.RegisterTask;
 import org.soraworld.account.tasks.ResetPwTask;
 import org.soraworld.violet.command.Args;
 import org.soraworld.violet.command.SpongeCommand;
@@ -35,9 +34,40 @@ public final class CommandAccount {
             String password = args.first();
             if (password.equals(args.get(1))) {
                 if (manager.legalPswd(password)) {
-                    Task.builder().async().name("RegisterQuery")
-                            .execute(new RegisterTask(manager, player, password))
-                            .submit(manager.getPlugin());
+                    if (manager.enableDB()) {
+                        // 异步 2. CACHE -> DB
+                        final UUID uuid = player.getUniqueId();
+                        Task.builder().async().name("RegisterQuery")
+                                .execute(() -> {
+                                    Account account = manager.pullAccount(uuid);
+                                    if (account == null) {
+                                        // 同步 更新
+                                        Task.builder().execute(() -> {
+                                            Account acc = getAccount(player).setPassword(password).setRegistered(true).setOnline(true);
+                                            player.offer(acc);
+                                            manager.unprotect(player);
+                                            manager.sendKey(player, "registerSuccess");
+                                            final Account copy = acc.copy();
+                                            Task.builder().async().execute(() -> {
+                                                if (!manager.pushAccount(copy)) {
+                                                    manager.consoleKey("pushAccountFailed");
+                                                }
+                                            }).submit(manager.getPlugin());
+                                        }).submit(manager.getPlugin());
+                                    } else manager.sendKey(player, "alreadyRegistered");
+                                }).submit(manager.getPlugin());
+                    } else {
+                        // 同步 1. 更新 CACHE
+                        Account account = getAccount(player);
+                        if (!account.isRegistered()) {
+                            player.offer(account
+                                    .setPassword(password)
+                                    .setRegistered(true)
+                                    .setOnline(true));
+                            manager.unprotect(player);
+                            manager.sendKey(player, "registerSuccess");
+                        } else manager.sendKey(player, "alreadyRegistered");
+                    }
                 } else manager.sendKey(player, "illegalPassword");
             } else manager.sendKey(player, "UnequalPasswordsMessage");
         } else manager.sendKey(player, "regUsage");
@@ -56,7 +86,7 @@ public final class CommandAccount {
     }
 
     static void login(Args args, AccountManager manager, Player player) {
-        if (getAccount(player.getUniqueId()).offline()) {
+        if (getAccount(player).offline()) {
             if (args.notEmpty()) {
                 Task.builder().async().name("LoginQuery")
                         .execute(new LoginTask(manager, player, args.first()))
@@ -69,7 +99,7 @@ public final class CommandAccount {
     public static void email(SpongeCommand self, CommandSource sender, Args args) {
         Player player = (Player) sender;
         AccountManager manager = (AccountManager) self.manager;
-        Account account = getAccount(player.getUniqueId());
+        Account account = getAccount(player);
         if (account.isRegistered()) {
             if (account.online()) {
                 if (args.notEmpty()) {
@@ -88,7 +118,7 @@ public final class CommandAccount {
     public static void changepassword(SpongeCommand self, CommandSource sender, Args args) {
         Player player = (Player) sender;
         AccountManager manager = (AccountManager) self.manager;
-        Account account = getAccount(player.getUniqueId());
+        Account account = getAccount(player);
         if (account.isRegistered()) {
             if (account.online()) {
                 if (args.size() == 3) {
@@ -123,7 +153,7 @@ public final class CommandAccount {
     public static void forgotpassword(SpongeCommand self, CommandSource sender, Args args) {
         Player player = (Player) sender;
         AccountManager manager = (AccountManager) self.manager;
-        Account account = getAccount(player.getUniqueId());
+        Account account = getAccount(player);
         if (account.isRegistered()) {
             if (account.offline()) {
                 String email = account.getEmail();
@@ -208,7 +238,7 @@ public final class CommandAccount {
                 //check if the account is an UUID
                 Optional<Player> player = Sponge.getServer().getPlayer(uuid);
                 if (player.isPresent()) {
-                    Account account = getAccount(uuid);
+                    Account account = getAccount(player.get());
                     if (!account.isRegistered()) {
                         manager.sendKey(sender, "AccountNotFound");
                     } else {
@@ -226,7 +256,7 @@ public final class CommandAccount {
             } catch (Throwable e) {
                 Optional<Player> player = Sponge.getServer().getPlayer(text);
                 if (player.isPresent()) {
-                    Account account = getAccount(player.get().getUniqueId());
+                    Account account = getAccount(player.get());
                     if (!account.isRegistered()) {
                         manager.sendKey(sender, "AccountNotFound");
                     } else {
@@ -248,7 +278,7 @@ public final class CommandAccount {
     private static boolean isOffline(AccountManager manager, CommandSource sender) {
         if (sender instanceof Player) {
             Player player = (Player) sender;
-            Account account = getAccount(player.getUniqueId());
+            Account account = getAccount(player);
             if (!account.isRegistered()) {
                 manager.sendKey(player, "accountNotRegister");
                 return true;
