@@ -16,7 +16,6 @@ public final class IPUtil {
         return (int) _byte & 0xff;
     }
 
-
     public static int getPlayerIP(Player player) {
         return player.getConnection().getAddress().getAddress().hashCode();
     }

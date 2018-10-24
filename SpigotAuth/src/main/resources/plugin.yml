@@ -1,0 +1,9 @@
+name: AuthAccount
+version: 1.0.0
+author: Himmelt
+main: org.soraworld.account.AuthAccount
+depend: [Violet]
+description: AuthAccount Plugin.
+permissions:
+  authaccount.admin:
+    default: op

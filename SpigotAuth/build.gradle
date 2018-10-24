@@ -1,0 +1,12 @@
+repositories {
+    maven {
+        name = 'spigot'
+        url = 'https://hub.spigotmc.org/nexus/content/groups/public/'
+    }
+}
+
+dependencies {
+    compile 'org.spigotmc:spigot-api:1.13.1-R0.1-SNAPSHOT'
+    compile 'org.soraworld:violet-spigot:2.3.7'
+    compile files('lib/spigot-nms-all.jar')
+}

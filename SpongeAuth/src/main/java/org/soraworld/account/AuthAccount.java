@@ -23,9 +23,9 @@ import java.util.HashSet;
 import java.util.List;
 
 @Plugin(
-        id = AuthAccount.PLUGIN_ID,
-        name = AuthAccount.PLUGIN_NAME,
-        version = AuthAccount.PLUGIN_VERSION,
+        id = AuthAccounts.PLUGIN_ID,
+        name = AuthAccounts.PLUGIN_NAME,
+        version = AuthAccounts.PLUGIN_VERSION,
         description = "AuthAccount Plugin for sponge.",
         dependencies = {
                 @Dependency(
@@ -35,10 +35,6 @@ import java.util.List;
         }
 )
 public class AuthAccount extends SpongePlugin {
-
-    public static final String PLUGIN_ID = "authaccount";
-    public static final String PLUGIN_NAME = "AuthAccount";
-    public static final String PLUGIN_VERSION = "1.0.0";
 
     private final HashSet<String> cmdNames = new HashSet<>();
 
