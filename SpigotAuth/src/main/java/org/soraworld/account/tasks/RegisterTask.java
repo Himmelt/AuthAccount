@@ -1,10 +1,9 @@
 package org.soraworld.account.tasks;
 
+import org.bukkit.entity.Player;
 import org.soraworld.account.data.Account;
 import org.soraworld.account.manager.AccountManager;
 import org.soraworld.account.util.IPUtil;
-import org.spongepowered.api.entity.living.player.Player;
-import org.spongepowered.api.scheduler.Task;
 
 import java.util.UUID;
 
@@ -61,8 +60,8 @@ public class RegisterTask implements Runnable {
 
                 // TODO 同步
                 if (manager.enableDB()) getAccount(player).sync(account);
-                Task.builder().execute(() -> manager.unprotect(player))
-                        .submit(manager.getPlugin());
+               /* Task.builder().execute(() -> manager.unprotect(player))
+                        .submit(manager.getPlugin());*/
             } catch (Exception e) {
                 if (manager.isDebug()) e.printStackTrace();
                 manager.console("Error creating hash");

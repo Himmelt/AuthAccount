@@ -1,12 +1,10 @@
 package org.soraworld.account.config;
 
+import org.bukkit.Bukkit;
+import org.bukkit.Location;
+import org.bukkit.World;
 import org.soraworld.hocon.node.Serializable;
 import org.soraworld.hocon.node.Setting;
-import org.spongepowered.api.Sponge;
-import org.spongepowered.api.world.Location;
-import org.spongepowered.api.world.World;
-
-import java.util.Optional;
 
 @Serializable
 public class Spawn {
@@ -19,15 +17,14 @@ public class Spawn {
     @Setting
     public int coordX, coordY, coordZ;
 
-    public Location<World> getSpawnLocation() {
-        if (worldName.isEmpty()) worldName = Sponge.getServer().getDefaultWorldName();
-        Optional<World> optionalWorld = Sponge.getServer().getWorld(worldName);
-        if (optionalWorld.isPresent()) {
-            World world = optionalWorld.get();
+    public Location getSpawnLocation() {
+        if (worldName.isEmpty()) worldName = Bukkit.getServer().getWorlds().get(0).getName();
+        World world = Bukkit.getServer().getWorld(worldName);
+        if (world != null) {
             if (defaultSpawn) {
                 return world.getSpawnLocation();
             }
-            return world.getLocation(coordX, coordY, coordZ);
+            return new Location(world, coordX, coordY, coordZ);
         }
         return null;
     }

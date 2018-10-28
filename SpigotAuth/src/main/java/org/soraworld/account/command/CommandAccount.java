@@ -1,13 +1,9 @@
 package org.soraworld.account.command;
 
-import com.google.common.base.Charsets;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.soraworld.account.data.Account;
 import org.soraworld.account.manager.AccountManager;
-import org.soraworld.account.tasks.ForceRegTask;
-import org.soraworld.account.tasks.LoginTask;
-import org.soraworld.account.tasks.ResetPwTask;
 import org.soraworld.violet.command.Args;
 import org.soraworld.violet.command.SpigotCommand;
 import org.soraworld.violet.command.Sub;
@@ -34,7 +30,7 @@ public final class CommandAccount {
                     if (manager.enableDB()) {
                         // 异步 2. CACHE -> DB
                         final UUID uuid = player.getUniqueId();
-                        Task.builder().async().name("RegisterQuery")
+                        /*Task.builder().async().name("RegisterQuery")
                                 .execute(() -> {
                                     Account account = manager.pullAccount(uuid);
                                     if (account == null) {
@@ -52,15 +48,15 @@ public final class CommandAccount {
                                             }).submit(manager.getPlugin());
                                         }).submit(manager.getPlugin());
                                     } else manager.sendKey(player, "alreadyRegistered");
-                                }).submit(manager.getPlugin());
+                                }).submit(manager.getPlugin());*/
                     } else {
                         // 同步 1. 更新 CACHE
                         Account account = getAccount(player);
                         if (!account.isRegistered()) {
-                            player.offer(account
+                            /*player.offer(account
                                     .setPassword(password)
                                     .setRegistered(true)
-                                    .setOnline(true));
+                                    .setOnline(true));*/
                             manager.unprotect(player);
                             manager.sendKey(player, "registerSuccess");
                         } else manager.sendKey(player, "alreadyRegistered");
@@ -85,9 +81,9 @@ public final class CommandAccount {
     static void login(Args args, AccountManager manager, Player player) {
         if (getAccount(player).offline()) {
             if (args.notEmpty()) {
-                Task.builder().async().name("LoginQuery")
+                /*Task.builder().async().name("LoginQuery")
                         .execute(new LoginTask(manager, player, args.first()))
-                        .submit(manager.getPlugin());
+                        .submit(manager.getPlugin());*/
             } else manager.sendKey(player, "emptyArgs");
         } else manager.sendKey(player, "alreadyLoggedIn");
     }
@@ -104,7 +100,7 @@ public final class CommandAccount {
                     if (E_MAIL.matcher(mail).matches()) {
                         account.setEmail(mail);
                         manager.sendKey(player, "setEmail", mail);
-                        Task.builder().async().execute(() -> manager.pushAccount(account)).submit(manager.getPlugin());
+                        //Task.builder().async().execute(() -> manager.pushAccount(account)).submit(manager.getPlugin());
                     } else manager.sendKey(player, "invalidEmail");
                 } else manager.sendKey(player, "getEmail", account.getEmail());
             } else manager.sendKey(player, "pleaseLogin");
@@ -125,7 +121,7 @@ public final class CommandAccount {
                         if (!password.isEmpty() && password.equals(args.get(2))) {
                             try {
                                 //Check if the first two passwords are equal to prevent typos
-                                Sponge.getScheduler().createTaskBuilder()
+                                /*Sponge.getScheduler().createTaskBuilder()
                                         //we are executing a SQL Query which is blocking
                                         .async()
                                         .name("Register Query")
@@ -134,7 +130,7 @@ public final class CommandAccount {
                                             if (manager.pushAccount(account)) {
                                                 manager.sendKey(player, "ChangePasswordMessage");
                                             } else manager.sendKey(player, "ErrorCommandMessage");
-                                        }).submit(manager.getPlugin());
+                                        }).submit(manager.getPlugin());*/
                             } catch (Exception e) {
                                 if (manager.isDebug()) e.printStackTrace();
                                 manager.consoleKey("ErrorCommandMessage");
@@ -175,17 +171,17 @@ public final class CommandAccount {
             try {
                 UUID uuid = UUID.fromString(text);
 
-                Optional<Player> player = Sponge.getServer().getPlayer(uuid);
+                /*Optional<Player> player = Sponge.getServer().getPlayer(uuid);
                 if (player.isPresent()) {
                     manager.sendKey(sender, "ForceRegisterOnlineMessage");
                 } else {
                     Task.builder().async().execute(new ForceRegTask(manager, sender, uuid, pswd)).submit(manager.getPlugin());
-                }
+                }*/
             } catch (Throwable e) {
 
                 // TODO check illegal name
 
-                Optional<Player> player = Sponge.getServer().getPlayer(text);
+               /* Optional<Player> player = Sponge.getServer().getPlayer(text);
                 if (player.isPresent()) {
                     manager.sendKey(sender, "ForceRegisterOnlineMessage");
                 } else {
@@ -193,7 +189,7 @@ public final class CommandAccount {
                     UUID offlineUUID = UUID.nameUUIDFromBytes(("OfflinePlayer:" + text).getBytes(Charsets.UTF_8));
 
                     Task.builder().async().execute(new ForceRegTask(manager, sender, offlineUUID, pswd)).submit(manager.getPlugin());
-                }
+                }*/
             }
         } else manager.sendKey(sender, "invalidArgs");
     }
@@ -207,18 +203,18 @@ public final class CommandAccount {
             try {
                 UUID uuid = UUID.fromString(text);
                 // TODO confirm
-                Task.builder().async().execute(() -> {
+                /*Task.builder().async().execute(() -> {
                     Account acc = manager.deleteAccount(uuid);
                     if (acc != null) manager.sendKey(sender, "AccountDeleted", acc.username(), acc.uuid());
                     else manager.sendKey(sender, "AccountNotFound");
-                }).submit(manager.getPlugin());
+                }).submit(manager.getPlugin());*/
             } catch (Throwable e) {
                 // TODO confirm
-                Task.builder().async().execute(() -> {
+               /* Task.builder().async().execute(() -> {
                     Account acc = manager.deleteAccount(text);
                     if (acc != null) manager.sendKey(sender, "AccountDeleted", acc.username(), acc.uuid());
                     else manager.sendKey(sender, "AccountNotFound");
-                }).submit(manager.getPlugin());
+                }).submit(manager.getPlugin());*/
             }
         } else manager.sendKey(sender, "emptyArgs");
     }
@@ -230,7 +226,7 @@ public final class CommandAccount {
         if (args.size() == 2) {
             String text = args.first();
             String pswd = args.get(1);
-            try {
+            /*try {
                 UUID uuid = UUID.fromString(text);
                 //check if the account is an UUID
                 Optional<Player> player = Sponge.getServer().getPlayer(uuid);
@@ -268,7 +264,7 @@ public final class CommandAccount {
                 } else {
                     Task.builder().async().execute(new ResetPwTask(sender, text, pswd, manager)).submit(manager.getPlugin());
                 }
-            }
+            }*/
         } else manager.sendKey(sender, "invalidArgs");
     }
 

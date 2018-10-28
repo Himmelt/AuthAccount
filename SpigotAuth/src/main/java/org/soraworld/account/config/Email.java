@@ -1,13 +1,12 @@
 package org.soraworld.account.config;
 
+import org.bukkit.entity.Player;
 import org.soraworld.account.data.Account;
 import org.soraworld.account.manager.AccountManager;
 import org.soraworld.account.util.Rand;
 import org.soraworld.hocon.node.Serializable;
 import org.soraworld.hocon.node.Setting;
 import org.soraworld.violet.util.ChatColor;
-import org.spongepowered.api.entity.living.player.Player;
-import org.spongepowered.api.scheduler.Task;
 
 import javax.mail.Message;
 import javax.mail.Session;
@@ -106,7 +105,7 @@ public class Email {
             //we only need to send the message so we use smtp
             Transport transport = session.getTransport("smtp");
             //send email
-            Task.builder().async().execute(() -> {
+            /*Task.builder().async().execute(() -> {
                 try {
                     //connect to host and send message
                     if (!transport.isConnected()) {
@@ -119,10 +118,10 @@ public class Email {
                     manager.consoleKey("sendMailException");
                     manager.sendKey(player, "sendMailFailed");
                 }
-            }).submit(manager.getPlugin());
+            }).submit(manager.getPlugin());*/
             //set new password here if the email sending fails fails we have still the old password
             target.setPassword(pswd);
-            Task.builder().async().execute(() -> manager.pushAccount(target)).submit(manager.getPlugin());
+            //Task.builder().async().execute(() -> manager.pushAccount(target)).submit(manager.getPlugin());
         } catch (Throwable e) {
             if (manager.isDebug()) e.printStackTrace();
             manager.consoleKey("sendMailException");

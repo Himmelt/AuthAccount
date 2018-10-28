@@ -1,13 +1,11 @@
 package org.soraworld.account.tasks;
 
+import org.bukkit.entity.Player;
 import org.soraworld.account.data.Account;
 import org.soraworld.account.manager.AccountManager;
 import org.soraworld.account.util.IPUtil;
-import org.spongepowered.api.entity.living.player.Player;
-import org.spongepowered.api.scheduler.Task;
 
 import java.util.UUID;
-import java.util.concurrent.TimeUnit;
 
 import static org.soraworld.account.manager.AccountManager.getAccount;
 
@@ -38,8 +36,9 @@ public class LoginTask implements Runnable {
                 if (attempts > manager.maxAttempts()) {
                     manager.sendKey(player, "MaxAttemptsMessage");
                     // TODO 超过尝试次数的冷却时间
-                    Task.builder().delay(manager.waitTime(), TimeUnit.SECONDS)
+                    /*Task.builder().delay(manager.waitTime(), TimeUnit.SECONDS)
                             .execute(() -> manager.getAttempts().remove(uuid)).submit(manager);
+                    */
                     return;
                 }
 
@@ -51,7 +50,7 @@ public class LoginTask implements Runnable {
                     account.setIp(IPUtil.getPlayerIP(player));
 
                     manager.sendKey(player, "LoggedIn");
-                    Task.builder().execute(() -> manager.unprotect(player)).submit(manager.getPlugin());
+                    //Task.builder().execute(() -> manager.unprotect(player)).submit(manager.getPlugin());
                     if (manager.enableDB()) {
                         getAccount(player).sync(account);// 更新缓存 DB --> NBT
                         manager.pushAccount(account);// 更新数据库状态 NBT --> DB

@@ -1,6 +1,10 @@
 package org.soraworld.account.manager;
 
+import org.bukkit.Bukkit;
+import org.bukkit.GameMode;
+import org.bukkit.Location;
 import org.bukkit.OfflinePlayer;
+import org.bukkit.entity.Player;
 import org.soraworld.account.AuthAccount;
 import org.soraworld.account.config.Database;
 import org.soraworld.account.config.Email;
@@ -10,14 +14,7 @@ import org.soraworld.account.data.Account;
 import org.soraworld.account.serializer.PatternSerializer;
 import org.soraworld.hocon.node.Setting;
 import org.soraworld.violet.manager.SpigotManager;
-import org.soraworld.violet.manager.SpongeManager;
 import org.soraworld.violet.util.ChatColor;
-import org.spongepowered.api.Sponge;
-import org.spongepowered.api.entity.living.player.Player;
-import org.spongepowered.api.entity.living.player.User;
-import org.spongepowered.api.entity.living.player.gamemode.GameMode;
-import org.spongepowered.api.world.Location;
-import org.spongepowered.api.world.World;
 
 import java.nio.file.Path;
 import java.util.HashMap;
@@ -37,7 +34,7 @@ public class AccountManager extends SpigotManager {
     private final Spawn spawn;
 
     private final AuthAccount plugin;
-    private final HashMap<UUID, Location<World>> oldLocations = new HashMap<>();
+    private final HashMap<UUID, Location> oldLocations = new HashMap<>();
 
     private static final HashMap<UUID, Double> originWalkSpeed = new HashMap<>();
     private static final HashMap<UUID, Double> originFlySpeed = new HashMap<>();
@@ -68,12 +65,12 @@ public class AccountManager extends SpigotManager {
         //run this task sync in order let it finish before the process ends
         cache.clear();
         database.close();
-        Sponge.getServer().getOnlinePlayers().forEach(this::unprotect);
+        Bukkit.getServer().getOnlinePlayers().forEach(this::unprotect);
     }
 
     public void afterLoad() {
         database.createTable();
-        Sponge.getServer().getOnlinePlayers().forEach(player -> {
+        Bukkit.getServer().getOnlinePlayers().forEach(player -> {
             protect(player);
             // TODO 此处什么目的？？
             database.queryAccount(player.getUniqueId());
@@ -98,35 +95,35 @@ public class AccountManager extends SpigotManager {
 
     public void protect(Player player) {
         if (spawn.enabled) {
-            Location<World> spawnLocation = spawn.getSpawnLocation();
+            Location spawnLocation = spawn.getSpawnLocation();
             if (spawnLocation != null) {
                 oldLocations.put(player.getUniqueId(), player.getLocation());
                 if (general.safeLocation) {
-                    Sponge.getTeleportHelper().getSafeLocation(spawnLocation).ifPresent(player::setLocation);
+                    //Sponge.getTeleportHelper().getSafeLocation(spawnLocation).ifPresent(player::setLocation);
                 } else {
-                    player.setLocation(spawnLocation);
+                    player.teleport(spawnLocation);
                 }
             }
         } else {
-            Location<World> oldLoc = player.getLocation();
+            Location oldLoc = player.getLocation();
             //sometimes players stuck in a wall
             if (general.safeLocation) {
-                Sponge.getTeleportHelper().getSafeLocation(oldLoc).ifPresent(player::setLocation);
+                //Sponge.getTeleportHelper().getSafeLocation(oldLoc).ifPresent(player::setLocation);
             } else {
-                player.setLocation(oldLoc);
+                player.teleport(oldLoc);
             }
         }
     }
 
     public void unprotect(Player player) {
-        Location<World> oldLocation = oldLocations.remove(player.getUniqueId());
+        Location oldLocation = oldLocations.remove(player.getUniqueId());
         if (oldLocation == null) {
             return;
         }
         if (general.safeLocation) {
-            Sponge.getTeleportHelper().getSafeLocation(oldLocation).ifPresent(player::setLocation);
+            //Sponge.getTeleportHelper().getSafeLocation(oldLocation).ifPresent(player::setLocation);
         } else {
-            player.setLocation(oldLocation);
+            player.teleport(oldLocation);
         }
     }
 
@@ -208,19 +205,20 @@ public class AccountManager extends SpigotManager {
 
     /* 禁止在主线程以外执行 */
     public static Account getAccount(OfflinePlayer user) {
-        return cache.computeIfAbsent(user.getUniqueId(), uuid -> {
+    /*    return cache.computeIfAbsent(user.getUniqueId(), uuid -> {
             Account account = user.getOrCreate(Account.class).orElse(new Account());
             account.setUUID(uuid);
             account.setUsername(user.getName());
             user.offer(account);
             return account;
-        });
+        });*/
+        return null;
     }
 
     /* 必须在最后一句调用 */
-    public static void removeCache(User user) {
+    public static void removeCache(OfflinePlayer user) {
         Account acc = cache.remove(user.getUniqueId());
-        user.offer(acc != null ? acc.setOnline(false) : new Account());
+        //user.offer(acc != null ? acc.setOnline(false) : new Account());
     }
 
     public boolean fallBack() {

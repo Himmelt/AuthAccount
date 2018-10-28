@@ -7,8 +7,6 @@ import org.soraworld.account.manager.AccountManager;
 import org.soraworld.hocon.node.Serializable;
 import org.soraworld.hocon.node.Setting;
 import org.soraworld.violet.util.ChatColor;
-import org.spongepowered.api.Sponge;
-import org.spongepowered.api.service.sql.SqlService;
 
 import java.io.File;
 import java.sql.*;
@@ -43,7 +41,7 @@ public class Database {
     @Setting(comment = "comment.database.historySize")
     public long historySize = 0;
 
-    private SqlService sql;
+    //private SqlService sql;
     private String jdbcURL;
     private final String storage;
     private final AccountManager manager;
@@ -72,8 +70,9 @@ public class Database {
     }
 
     public Connection getConnection() throws SQLException {
-        if (sql == null) sql = Sponge.getServiceManager().provideUnchecked(SqlService.class);
-        return sql.getDataSource(getJdbcURL()).getConnection();
+        //if (sql == null) sql = Sponge.getServiceManager().provideUnchecked(SqlService.class);
+        //return sql.getDataSource(getJdbcURL()).getConnection();
+        return null;
     }
 
     public void createTable() {
